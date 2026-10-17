@@ -84,8 +84,8 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 - [x] `answer_customer` schema
 
 ### E8.2 — Reviewer and use case [M] · tag `etapa-8.2`
-- [ ] `ReviewLoop` with at most 2 revisions and escalation by code
-- [ ] `AnswerCustomer` returning `Flow<AgentEvent>`, one per question
+- [x] `ReviewLoop` with at most 2 revisions and escalation by code
+- [x] `AnswerCustomer` returning `Flow<AgentEvent>`, one per question
 
 ### E9.1 — Events, trace and cost [D] · tag `etapa-9.1`
 - [ ] Guide `docs/stages/9-1-trace.md`

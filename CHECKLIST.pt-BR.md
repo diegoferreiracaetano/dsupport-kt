@@ -84,8 +84,8 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [x] Esquema `answer_customer`
 
 ### E8.2 — Revisor e caso de uso [M] · tag `etapa-8.2`
-- [ ] `ReviewLoop` com no máximo 2 revisões e escalação por código
-- [ ] `AnswerCustomer` devolvendo `Flow<AgentEvent>`, um por pergunta
+- [x] `ReviewLoop` com no máximo 2 revisões e escalação por código
+- [x] `AnswerCustomer` devolvendo `Flow<AgentEvent>`, um por pergunta
 
 ### E9.1 — Eventos, trace e custo [D] · tag `etapa-9.1`
 - [ ] Guia `docs/stages/9-1-trace.pt-BR.md`
