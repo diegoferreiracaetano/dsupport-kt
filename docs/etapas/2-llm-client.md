@@ -94,18 +94,22 @@ class AnthropicLlmClient(
     private val http: HttpClient,
     private val maxTokens: Int = 4096,
     private val maxRetries: Int = 2,
+    private val baseUrl: String = "https://api.anthropic.com",
+    private val mapper: AnthropicMapper = AnthropicMapper(),
 ) : LlmClient {
     override suspend fun next(request: LlmRequest): LlmReply
     override suspend fun structured(request: LlmRequest, schema: OutputSchema): JsonObject
 }
 ```
 
-O mapeamento fica separado, em `AnthropicMapping.kt`, para testar sem rede:
+O mapeamento fica separado, na classe `AnthropicMapper` (arquivo `AnthropicMapper.kt`), para testar sem rede e poder ser simulado com MockK:
 
 ```kotlin
-internal fun buildRequestBody(modelId: String, maxTokens: Int, request: LlmRequest, schema: OutputSchema? = null): JsonObject
-internal fun parseReply(body: JsonObject): LlmReply
-internal fun parseStructured(body: JsonObject): JsonObject
+class AnthropicMapper {
+    fun buildRequest(modelId: String, maxTokens: Int, request: LlmRequest, schema: OutputSchema? = null): JsonObject
+    fun parseReply(body: JsonObject): LlmReply
+    fun parseStructured(body: JsonObject): JsonObject
+}
 ```
 
 Regras de comportamento:
@@ -126,7 +130,7 @@ private fun client(engine: MockEngine) = AnthropicLlmClient(
 )
 ```
 
-`AnthropicMappingTest` e `AnthropicLlmClientTest`:
+`AnthropicMapperTest` e `AnthropicLlmClientTest` (uma classe de teste por classe de produção; no cliente, o `AnthropicMapper` é simulado com MockK e a rede com o `MockEngine`). Nomes no formato `given … when … then should …`:
 
 - `maps system, messages and tools to the API JSON`
 - `tool result becomes a tool_result with tool_use_id inside a user message`

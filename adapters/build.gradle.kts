@@ -15,6 +15,7 @@ kotlin {
         jvmMain.dependencies { implementation(libs.ktor.client.cio) }
         commonTest.dependencies { implementation(kotlin("test")) }
         jvmTest.dependencies {
+            implementation(libs.mockk)
             implementation(libs.ktor.client.mock)
             implementation(project(":testing"))
         }
