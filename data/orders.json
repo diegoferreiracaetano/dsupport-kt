@@ -1,0 +1,263 @@
+[
+  {
+    "order_id": "1001",
+    "email": "ana@example.com",
+    "status": "delivered",
+    "eta": "2026-09-20",
+    "carrier": "FastShip",
+    "tracking": "FS100101",
+    "total": 89.9,
+    "items": [
+      {
+        "sku": "MOU-1",
+        "name": "Wireless Mouse",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "order_id": "1002",
+    "email": "bruno@example.com",
+    "status": "delivered",
+    "eta": "2026-09-28",
+    "carrier": "SwiftPost",
+    "tracking": "SP200202",
+    "total": 149.0,
+    "items": [
+      {
+        "sku": "KEY-2",
+        "name": "Mechanical Keyboard",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "order_id": "1042",
+    "email": "ana@example.com",
+    "status": "in_transit",
+    "eta": "2026-10-05",
+    "carrier": "FastShip",
+    "tracking": "FS104200",
+    "total": 239.8,
+    "items": [
+      {
+        "sku": "HDP-3",
+        "name": "Noise Cancelling Headphones",
+        "qty": 1
+      },
+      {
+        "sku": "CBL-9",
+        "name": "USB-C Cable",
+        "qty": 2
+      }
+    ]
+  },
+  {
+    "order_id": "1043",
+    "email": "carla@example.com",
+    "status": "delivered",
+    "eta": "2026-09-25",
+    "carrier": "Loggi",
+    "tracking": "LG104300",
+    "total": 59.9,
+    "items": [
+      {
+        "sku": "BAG-4",
+        "name": "Laptop Sleeve",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "order_id": "1044",
+    "email": "diego@example.com",
+    "status": "in_transit",
+    "eta": "2026-10-20",
+    "carrier": "SwiftPost",
+    "tracking": "SP104400",
+    "total": 320.0,
+    "items": [
+      {
+        "sku": "MON-5",
+        "name": "27 inch Monitor",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "order_id": "1045",
+    "email": "elisa@example.com",
+    "status": "processing",
+    "eta": "2026-10-22",
+    "carrier": "",
+    "tracking": "",
+    "total": 74.5,
+    "items": [
+      {
+        "sku": "WEB-6",
+        "name": "HD Webcam",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "order_id": "1046",
+    "email": "fernanda@example.com",
+    "status": "in_transit",
+    "eta": "2026-10-01",
+    "carrier": "FastShip",
+    "tracking": "FS104600",
+    "total": 199.9,
+    "items": [
+      {
+        "sku": "CHR-7",
+        "name": "Ergonomic Chair Cushion",
+        "qty": 2
+      }
+    ]
+  },
+  {
+    "order_id": "1047",
+    "email": "gabriel@example.com",
+    "status": "canceled",
+    "eta": "2026-10-10",
+    "carrier": "",
+    "tracking": "",
+    "total": 45.0,
+    "items": [
+      {
+        "sku": "PAD-8",
+        "name": "Mouse Pad XL",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "order_id": "1048",
+    "email": "helena@example.com",
+    "status": "return_in_progress",
+    "eta": "2026-10-02",
+    "carrier": "Loggi",
+    "tracking": "LG104800",
+    "total": 129.9,
+    "items": [
+      {
+        "sku": "SPK-10",
+        "name": "Bluetooth Speaker",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "order_id": "1049",
+    "email": "bruno@example.com",
+    "status": "in_transit",
+    "eta": "2026-10-14",
+    "carrier": "SwiftPost",
+    "tracking": "SP104900",
+    "total": 34.9,
+    "items": [
+      {
+        "sku": "CBL-11",
+        "name": "HDMI Cable",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "order_id": "1050",
+    "email": "carla@example.com",
+    "status": "in_transit",
+    "eta": "2026-10-15",
+    "carrier": "Loggi",
+    "tracking": "LG105000",
+    "total": 89.0,
+    "items": [
+      {
+        "sku": "LMP-12",
+        "name": "Desk Lamp",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "order_id": "1051",
+    "email": "ana@example.com",
+    "status": "delivered",
+    "eta": "2026-08-30",
+    "carrier": "FastShip",
+    "tracking": "FS105100",
+    "total": 19.9,
+    "items": [
+      {
+        "sku": "STD-13",
+        "name": "Phone Stand",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "order_id": "1052",
+    "email": "diego@example.com",
+    "status": "canceled",
+    "eta": "2026-09-18",
+    "carrier": "",
+    "tracking": "",
+    "total": 260.0,
+    "items": [
+      {
+        "sku": "TAB-14",
+        "name": "Drawing Tablet",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "order_id": "1053",
+    "email": "elisa@example.com",
+    "status": "delivered",
+    "eta": "2026-10-03",
+    "carrier": "SwiftPost",
+    "tracking": "SP105300",
+    "total": 52.0,
+    "items": [
+      {
+        "sku": "HUB-15",
+        "name": "USB Hub",
+        "qty": 2
+      }
+    ]
+  },
+  {
+    "order_id": "1054",
+    "email": "gabriel@example.com",
+    "status": "processing",
+    "eta": "2026-10-25",
+    "carrier": "",
+    "tracking": "",
+    "total": 410.0,
+    "items": [
+      {
+        "sku": "SSD-16",
+        "name": "1TB External SSD",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "order_id": "1055",
+    "email": "helena@example.com",
+    "status": "in_transit",
+    "eta": "2026-10-18",
+    "carrier": "Loggi",
+    "tracking": "LG105500",
+    "total": 99.9,
+    "items": [
+      {
+        "sku": "BLT-17",
+        "name": "Fitness Band",
+        "qty": 1
+      }
+    ]
+  }
+]

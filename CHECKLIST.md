@@ -43,10 +43,10 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [x] ADR do cliente (SDK oficial ou HTTP direto)
 
 ### E3 — Ferramentas reais [M] · tag `etapa-3`
-- [ ] Domínio `Order`/`Ticket` e portas `OrderGateway`/`TicketGateway`
-- [ ] `get_order_status` (com atraso calculado), `track_shipment`, `create_ticket`
-- [ ] Repositórios JSON em `jvmMain`; dados sem marca
-- [ ] `LocalToolProvider`
+- [x] Domínio `Order`/`Ticket` e portas `OrderGateway`/`TicketGateway`
+- [x] `get_order_status` (com atraso calculado), `track_shipment`, `create_ticket`
+- [x] Repositórios JSON em `jvmMain`; dados sem marca
+- [x] `LocalToolProvider`
 
 ### E4 — RAG [M] · tag `etapa-4`
 - [ ] Chunker por seção, normalização de acentos sem `java.text`
