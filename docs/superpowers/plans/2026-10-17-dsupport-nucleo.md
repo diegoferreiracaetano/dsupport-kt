@@ -14,7 +14,7 @@
 
 - Toolchain da JVM: JDK 21. O JDK 26 do sistema não roda o Gradle 8.10; fixar o JVM do daemon em `gradle/gradle-daemon-jvm.properties`, sem tocar em `~/.gradle`.
 - Pacote raiz: `dsupport` (`dsupport.contract`, `dsupport.core`, `dsupport.adapters`…).
-- `contract` e `core` têm só `commonMain` e `commonTest`; proibido `java.*`, `File`, `ProcessBuilder` e Gson. Alvos: `jvm` e `wasmJs` (testes só na JVM). `adapters` e aplicações: só `jvm`.
+- `contract` e `core` têm só `commonMain` e `commonTest`; proibido `java.*`, `File`, `ProcessBuilder` e Gson. Alvos de `contract`, `core` e `testing`: `jvm` e `wasmJs` (testes só na JVM; o Wasm compila código e testes). `adapters` e aplicações: só `jvm`.
 - Serialização: `kotlinx.serialization` em todo lugar.
 - LLM: o `core` não importa nada de provedor; só a porta `LlmClient`.
 - Ferramenta destrutiva sem guarda que a cubra é rejeitada na montagem.
@@ -50,8 +50,8 @@
 - [ ] **Step 1:** Resolver as versões atuais de Kotlin, Gradle, coroutines, serialization, datetime, Ktor, kotlin-sdk (MCP) e JUnit consultando Maven Central/releases; registrá-las em `libs.versions.toml`. Escolher um Gradle que rode no JDK 21 e um Kotlin compatível com ele.
 - [ ] **Step 2:** Escrever `SmokeTest` (`fun `core compila e roda`() = assertEquals(2, 1 + 1)`) em `commonTest` do `core`.
 - [ ] **Step 3:** Rodar `./gradlew :core:jvmTest` → FAIL (projeto ainda sem módulos).
-- [ ] **Step 4:** Criar o build multi-módulo; `contract` e `core` com `jvm()` + `wasmJs { browser() }`; `testing` e `adapters` com `jvm()`; demais módulos Kotlin/JVM com plugin `application`; gerar `gradle-daemon-jvm.properties` para o JDK 21 (`./gradlew updateDaemonJvm`).
-- [ ] **Step 5:** Rodar `./gradlew test :core:compileKotlinWasmJs :contract:compileKotlinWasmJs` → todos passam, a partir de um terminal cujo `java -version` é 26.
+- [ ] **Step 4:** Criar o build multi-módulo; `contract`, `core` e `testing` com `jvm()` + `wasmJs { browser() }`; `adapters` com `jvm()`; demais módulos Kotlin/JVM com plugin `application`; gerar `gradle-daemon-jvm.properties` para o JDK 21 (`./gradlew updateDaemonJvm`).
+- [ ] **Step 5:** Rodar `./gradlew test :core:wasmJsTestClasses :contract:wasmJsTestClasses :testing:wasmJsTestClasses` → todos passam, a partir de um terminal cujo `java -version` é 26.
 - [ ] **Step 6:** CI: workflow com JDK 21 rodando `./gradlew test` e a compilação Wasm. README com três linhas: o que é, como rodar os testes, requisito de JDK.
 - [ ] **Step 7:** `git init`, ajustar `.gitignore`, commit único e tag `etapa-0`.
 
