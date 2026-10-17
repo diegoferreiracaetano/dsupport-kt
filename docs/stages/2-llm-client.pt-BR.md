@@ -1,13 +1,15 @@
 # Etapa 2 — O Claude de verdade responde
 
+[English](2-llm-client.md) | [Português](2-llm-client.pt-BR.md)
+
 ## Objetivo
 
-Trocar o modelo roteirizado de teste por um cliente que chama a API da Anthropic. O `Agent` e as ferramentas **não mudam**: só entra um adaptador novo atrás da porta `LlmClient`. Você escreve este adaptador.
+Trocar o modelo simulado dos testes por um cliente que chama a API da Anthropic. O `Agent` e as ferramentas **não mudam**: só entra um adaptador novo atrás da porta `LlmClient`. Você escreve este adaptador.
 
 | Peça | Etapa 1 | Etapa 2 |
 |---|---|---|
 | Loop agêntico (`Agent`) | real | real, sem mudar |
-| `LlmClient` | `ScriptedLlmClient` (teste) | **`AnthropicLlmClient` (real)** |
+| `LlmClient` | mock do MockK (nos testes) | **`AnthropicLlmClient` (real)** |
 | Ferramentas | só nos testes | só nos testes |
 
 Local: módulo `adapters`, em `commonMain` (código multiplataforma, sem `java.*`).
@@ -130,23 +132,37 @@ private fun client(engine: MockEngine) = AnthropicLlmClient(
 )
 ```
 
-`AnthropicMapperTest` e `AnthropicLlmClientTest` (uma classe de teste por classe de produção; no cliente, o `AnthropicMapper` é simulado com MockK e a rede com o `MockEngine`). Nomes no formato `given … when … then should …`:
+`AnthropicMapperTest` (mapeamento, sem rede) e `AnthropicLlmClientTest` (uma classe de teste por classe de produção; no cliente, o `AnthropicMapper` é simulado com MockK e a rede com o `MockEngine`). Nomes no formato `given … when … then should …`:
 
-- `maps system, messages and tools to the API JSON`
-- `tool result becomes a tool_result with tool_use_id inside a user message`
-- `several results of the same turn go in a single message`
-- `consecutive user messages become one, with tool_result before the text`
-- `is_error is set on the tool_result when the tool failed`
-- `omits tools when there are none and never sends tool_choice`
-- `reads several tool_use blocks as ToolCalls and the usage tokens`
-- `structured sends output_config.format with the schema and reads the JSON from the text`
-- `429 is retried and the later good response is returned` (the `MockEngine` answers 429 and then 200)
-- `500 is retried up to maxRetries and then throws LlmApiException`
-- `401 throws immediately without retrying` (count the engine calls: exactly one)
-- `body without content throws LlmApiException`
-- `thinking block throws LlmApiException`
+**AnthropicMapperTest**
 
-E a suíte de contrato, que prova que o cliente cumpre a mesma porta que o modelo roteirizado:
+- `given a request with system, messages and tools when building then should map them to the API JSON`
+- `given a tool result in the history when building then should send a tool_result with its tool_use_id in a user message`
+- `given several results of the same turn when building then should send them in a single message`
+- `given a user message after tool results when building then should merge them with the tool_result first`
+- `given failed and successful results when building then should set is_error only on the failed one`
+- `given no tools when building then should omit tools and never send tool_choice or sampling parameters`
+- `given an output schema when building then should add output_config format with that schema`
+- `given several tool_use blocks when parsing a reply then should return ToolCalls with the usage tokens`
+- `given several text blocks when parsing a reply then should join them into one Text reply`
+- `given a JSON text when parsing a structured reply then should return the object`
+- `given a body without content when parsing a reply then should throw LlmApiException`
+- `given a thinking block when parsing a reply then should throw LlmApiException`
+- `given a refusal when parsing then should throw LlmApiException`
+- `given a cut or invalid JSON when parsing a structured reply then should throw LlmApiException`
+- `given an empty content array when parsing a reply then should throw LlmApiException`
+
+**AnthropicLlmClientTest**
+
+- `given a request when asking for the next reply then should post the built body with the required headers`
+- `given an output schema when asking for a structured reply then should build the request with it and parse the result`
+- `given a 429 followed by a good response when asking for the next reply then should retry and return it`
+- `given a 529 overloaded response when asking for the next reply then should retry like any 5xx`
+- `given a persistent 500 when asking for the next reply then should retry up to maxRetries and throw`
+- `given a 401 when asking for the next reply then should throw immediately without retrying`
+- `given a body that is not JSON when asking for the next reply then should throw LlmApiException`
+
+E a suíte de contrato, que prova que o cliente cumpre a porta `LlmClient` (qualquer provedor futuro tem que passar nela):
 
 ```kotlin
 class AnthropicLlmClientContractTest : LlmClientContract() {
@@ -168,7 +184,7 @@ Esperado: todos os testes passam, sem chave e sem rede. Só depois, e só se voc
 
 ## O que observar
 
-- O JSON que o seu `buildRequestBody` gera para uma conversa com ferramenta: confira que o `id` aparece nas duas pontas.
+- O JSON que o `AnthropicMapper.buildRequest` gera para uma conversa com ferramenta: confira que o `id` aparece nas duas pontas.
 - Quantas mensagens saem para a API quando o histórico termina em `ToolResult` seguido de um `User`: deve ser **uma**.
 - O número de chamadas que o `MockEngine` recebe no teste do 401 (uma) e no do 500 (três: a original e duas repetições).
 
@@ -180,7 +196,7 @@ Esperado: todos os testes passam, sem chave e sem rede. Só depois, e só se voc
 
 ## ADR (registre a decisão)
 
-Crie `docs/adr/0003-cliente-llm.md` com contexto, decisão e consequências das três decisões acima: HTTP direto em `commonMain` em vez do SDK oficial (que é só JVM), `thinking` desligado por não carregarmos blocos de raciocínio no histórico neutro, e saída estruturada por `output_config.format`.
+Crie `docs/adr/0003-llm-client.md` (e `0003-llm-client.pt-BR.md`) com contexto, decisão e consequências das três decisões acima: HTTP direto em `commonMain` em vez do SDK oficial (que é só JVM), `thinking` desligado por não carregarmos blocos de raciocínio no histórico neutro, e saída estruturada por `output_config.format`.
 
 ## Como explicar na entrevista
 

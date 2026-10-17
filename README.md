@@ -1,15 +1,21 @@
 # DSupport
 
-Assistente de suporte ao cliente multi-agente, construído à mão em Kotlin Multiplatform: Clean Architecture, ferramentas locais e via MCP, LLM trocável, guardas determinísticas, saída tipada, revisor e avaliação com relatório versionado.
+[English](README.md) | [Português](README.pt-BR.md)
 
-> Em construção. Acompanhe o andamento em [CHECKLIST.md](CHECKLIST.md); a decisão de design está em [docs/superpowers/specs](docs/superpowers/specs).
+A multi-agent customer support assistant, hand-built in Kotlin Multiplatform: Clean Architecture, local and MCP tools, a swappable LLM, deterministic guards, typed output, a reviewer, and an evaluation with a versioned report.
 
-## Requisitos
+> Work in progress. Follow the progress in [CHECKLIST.md](CHECKLIST.md); the design decisions are in [docs/superpowers/specs](docs/superpowers/specs).
 
-- JDK 21 (o projeto fixa a JVM do Gradle em `gradle/gradle-daemon-jvm.properties`; o `java` padrão da máquina pode ser outro).
+## Requirements
 
-## Testes
+- JDK 21 (the project pins the Gradle JVM in `gradle/gradle-daemon-jvm.properties`; the machine's default `java` can be a different version).
+
+## Tests
 
 ```bash
 ./gradlew test
 ```
+
+## Documentation
+
+Project documents exist in English (`name.md`) and Portuguese (`name.pt-BR.md`): the README, the checklist, the ADRs in `docs/adr` and the stage guides in `docs/stages`. The design spec and the implementation plan under `docs/superpowers` are working documents, kept in Portuguese only.

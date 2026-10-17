@@ -51,7 +51,7 @@ dsupport-kt/
 ├── eval/          JVM · golden dataset, runner e relatório
 ├── data/          kb/, orders.json, tickets.json, golden.json
 ├── config/        mcp-servers.json, agents (quais ferramentas cada agente enxerga)
-├── docs/          adr/, etapas/, apresentacao/, superpowers/specs/
+├── docs/          adr/, stages/, presentation/, superpowers/specs/
 └── .github/workflows/ci.yml
 ```
 

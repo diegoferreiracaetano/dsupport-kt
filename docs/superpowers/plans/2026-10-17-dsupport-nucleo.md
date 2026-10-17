@@ -22,16 +22,17 @@
 - Nenhuma marca de loja nos dados nem nos prompts.
 - `data/tickets.json` volta a `[]` antes de cada commit; `traces/` no `.gitignore`; `reports/` versionado.
 - Revisões do revisor: no máximo 2 (`maxRevisions = 2`); `maxTurns` padrão do agente = 5.
+- **Docs:** project documents (README, checklist, ADRs, stage guides) exist in English (`name.md`) and Portuguese (`name.pt-BR.md`) and are always changed together. The spec and this plan are working documents, in Portuguese only.
 - **Test style:** each test targets one production class, collaborators are MockK mocks (`coEvery`/`coVerify`), names follow `given <context> when <action> then should <result>`, in `jvmTest` because MockK is JVM-only. Ktor HTTP boundaries use `MockEngine`. The test names in this plan are descriptions: write them in that format.
 - **Code style:** no comments in code (KDoc only, where it serves as documentation). Identifiers, KDoc, error messages, log text and test names in English. The test names and messages written in Portuguese in this plan are descriptions: write them in English. Customer-facing text (knowledge-base articles, agent prompts, replies) is product content and is decided separately.
 - **Commits:** um commit por etapa, ao final dela, só no nome do usuário (sem `Co-Authored-By`), seguido da tag `etapa-N`. Não commitar por passo.
-- **Autoria:** tarefas marcadas **[D]** são escritas por Diego, depois de um guia em `docs/etapas/N.md` escrito antes por Claude; Claude revisa e roda os testes. As marcadas **[M]** são feitas por Claude.
+- **Autoria:** tarefas marcadas **[D]** são escritas por Diego, depois de um guia em `docs/stages/N-name.md` (e `.pt-BR.md`) escrito antes por Claude; Claude revisa e roda os testes. As marcadas **[M]** são feitas por Claude.
 - Antes de cada tarefa, explicar o que será feito; depois dos testes, esperar a confirmação do Diego para tagear e seguir.
 
 ## Review Focus
 
 - Mensagem do cliente sem número de pedido ou sem e-mail (ou e-mail malformado): nenhuma ferramenta de pedido é chamada e o agente pede o dado. → Tarefa 7.
-- Pergunta sem artigo relevante na base: `search_kb` devolve `nada_relevante_encontrado`, o especialista responde `SEM_RESPOSTA`, e o sistema escala em vez de inventar. → Tarefas 4 e 8.1.
+- Pergunta sem artigo relevante na base: `search_kb` devolve `nothing_relevant_found`, o especialista responde `NO_ANSWER`, e o sistema escala em vez de inventar. → Tarefas 4 e 8.1.
 - Servidor MCP que não sobe, cai no meio ou devolve erro: o agente recebe um `ToolResult(isError = true)` e segue; nada derruba o processo; há tempo limite por chamada. → Tarefa 5.
 - Erro da API do LLM (429, 5xx, corpo vazio ou JSON malformado): erro tipado, no máximo 2 novas tentativas, depois falha com mensagem clara; na avaliação o caso conta como falha e o runner continua. → Tarefas 2 e 9.2.
 - Duas chamadas paralelas a `create_ticket` para o mesmo cliente: sai um único ticket. → Tarefas 6 e 7.
@@ -81,7 +82,7 @@
 ### Task 2: `AnthropicLlmClient` (etapa 2) [D]
 
 **Files:**
-- Create: `docs/etapas/2-llm-client.md` (guia, Claude), `adapters/src/commonMain/kotlin/dsupport/adapters/llm/AnthropicLlmClient.kt`, `.../llm/AnthropicMapping.kt`
+- Create: `docs/stages/2-llm-client.md` (guia, Claude), `adapters/src/commonMain/kotlin/dsupport/adapters/llm/AnthropicLlmClient.kt`, `.../llm/AnthropicMapping.kt`
 - Test: `adapters/src/jvmTest/kotlin/dsupport/adapters/llm/{AnthropicMappingTest,AnthropicLlmClientContractTest}.kt`
 
 **Interfaces:**
@@ -120,9 +121,9 @@
 - Test: `adapters/src/jvmTest/.../rag/{ChunkerTest,TfIdfEmbedderTest,VectorKnowledgeBaseTest,VoyageEmbedderTest}.kt`, `core/src/commonTest/.../tools/SearchKbToolTest.kt`
 
 **Interfaces:**
-- Produces: `data class Hit(docId: String, title: String, snippet: String, score: Double)`; `interface KnowledgeSearch { suspend fun search(query: String, k: Int = 3): List<Hit> }`; `interface Embedder { suspend fun embedDocuments(texts: List<String>): List<DoubleArray>; suspend fun embedQuery(text: String): DoubleArray }`; `fun chunkMarkdown(docId: String, text: String): List<Chunk>`; `fun fold(text: String): String` (minúsculas, sem acentos, sem `java.text`); `class TfIdfEmbedder : Embedder`; `class VoyageEmbedder(apiKey: String, http: HttpClient, model: String = "voyage-3.5") : Embedder`; `class VectorKnowledgeBase(embedder: Embedder, chunks: List<Chunk>) : KnowledgeSearch` com `suspend fun create(...)`; `fun loadKbDocuments(dir: Path): Map<String, String>`; `class SearchKbTool(kb: KnowledgeSearch, minScore: Double = 0.25) : Tool` (devolve `fail("nada_relevante_encontrado")` abaixo do corte).
+- Produces: `data class Hit(docId: String, title: String, snippet: String, score: Double)`; `interface KnowledgeSearch { suspend fun search(query: String, k: Int = 3): List<Hit> }`; `interface Embedder { suspend fun embedDocuments(texts: List<String>): List<DoubleArray>; suspend fun embedQuery(text: String): DoubleArray }`; `fun chunkMarkdown(docId: String, text: String): List<Chunk>`; `fun fold(text: String): String` (minúsculas, sem acentos, sem `java.text`); `class TfIdfEmbedder : Embedder`; `class VoyageEmbedder(apiKey: String, http: HttpClient, model: String = "voyage-3.5") : Embedder`; `class VectorKnowledgeBase(embedder: Embedder, chunks: List<Chunk>) : KnowledgeSearch` com `suspend fun create(...)`; `fun loadKbDocuments(dir: Path): Map<String, String>`; `class SearchKbTool(kb: KnowledgeSearch, minScore: Double = 0.25) : Tool` (devolve `fail("nothing_relevant_found")` abaixo do corte).
 
-- [ ] **Step 1:** Testes: `chunker divide por seções "## " e prefixa o título do artigo`; `fold("devolução") == "devolucao"`; `consulta sobre devolução ranqueia o artigo de devoluções em primeiro`; `texto fora do vocabulário tem score 0`; `SearchKbTool abaixo de minScore devolve nada_relevante_encontrado`; `VoyageEmbedder envia input_type document/query e normaliza os vetores` (MockEngine).
+- [ ] **Step 1:** Testes: `chunker divide por seções "## " e prefixa o título do artigo`; `fold("Café") == "cafe"`; `consulta sobre devolução ranqueia o artigo de devoluções em primeiro`; `texto fora do vocabulário tem score 0`; `SearchKbTool abaixo de minScore devolve nothing_relevant_found`; `VoyageEmbedder envia input_type document/query e normaliza os vetores` (MockEngine).
 - [ ] **Step 2:** Rodar `./gradlew :adapters:jvmTest :core:jvmTest` → FAIL.
 - [ ] **Step 3:** Implementar. Tirar acentos com uma tabela de caracteres, sem `Normalizer`. Stemming simples (`take(5)`) e stopwords como no estudo.
 - [ ] **Step 4:** Rodar os testes → PASS.
@@ -131,7 +132,7 @@
 ### Task 5: MCP com o SDK oficial (etapa 5) [D]
 
 **Files:**
-- Create: `docs/etapas/5-mcp.md` (guia, Claude), `core/.../config/McpServersConfig.kt`, `adapters/src/jvmMain/.../mcp/McpToolProvider.kt`, `mcp-orders/src/main/kotlin/dsupport/mcp/orders/Main.kt`, `mcp-tickets/src/main/kotlin/dsupport/mcp/tickets/Main.kt`, `config/mcp-servers.json`
+- Create: `docs/stages/5-mcp.md` (guia, Claude), `core/.../config/McpServersConfig.kt`, `adapters/src/jvmMain/.../mcp/McpToolProvider.kt`, `mcp-orders/src/main/kotlin/dsupport/mcp/orders/Main.kt`, `mcp-tickets/src/main/kotlin/dsupport/mcp/tickets/Main.kt`, `config/mcp-servers.json`
 - Test: `adapters/src/jvmTest/.../mcp/McpToolProviderTest.kt`, `mcp-orders/src/test/.../OrdersServerTest.kt`
 
 **Interfaces:**
@@ -149,13 +150,13 @@
 ### Task 6: Multi-agentes e paralelismo (etapa 6) [D]
 
 **Files:**
-- Create: `docs/etapas/6-multiagentes.md` (guia, Claude), `core/.../agent/{SubAgentTool,Prompts,AgentsConfig,ToolCatalog}.kt`, `config/agents.json`, `cli/src/main/kotlin/dsupport/cli/{Main,Assembly}.kt`
+- Create: `docs/stages/6-multi-agents.md` (guia, Claude), `core/.../agent/{SubAgentTool,Prompts,AgentsConfig,ToolCatalog}.kt`, `config/agents.json`, `cli/src/main/kotlin/dsupport/cli/{Main,Assembly}.kt`
 - Modify: `core/.../agent/Agent.kt` (executa em paralelo os pedidos de ferramenta de um mesmo turno)
 - Test: `core/src/commonTest/.../agent/{ParallelToolsTest,SubAgentToolTest,ToolCatalogTest}.kt`
 
 **Interfaces:**
 - Consumes: `Agent`, `Tool`, `ToolProvider`, `LocalToolProvider`, `McpToolProvider`.
-- Produces: `fun subAgentTool(name: String, description: String, agent: Agent): Tool` (entrada `{ "tarefa": string }`); `@Serializable data class AgentDef(tools: List<String>, maxTurns: Int = 4)`; `@Serializable data class AgentsConfig(agents: Map<String, AgentDef>)`; `class ToolCatalog(providers: List<ToolProvider>) { suspend fun select(names: List<String>): List<Tool> }` (nome desconhecido = erro de montagem); prompts neutros `ORCHESTRATOR_PROMPT`, `KNOWLEDGE_PROMPT`, `ORDERS_PROMPT`, `ESCALATION_PROMPT` (sem marca); `cli`: `suspend fun assemble(events: EventSink): Agent` (orquestrador com os 3 especialistas) e `Main` que lê uma pergunta e imprime a resposta.
+- Produces: `fun subAgentTool(name: String, description: String, agent: Agent): Tool` (entrada `{ "task": string }`); `@Serializable data class AgentDef(tools: List<String>, maxTurns: Int = 4)`; `@Serializable data class AgentsConfig(agents: Map<String, AgentDef>)`; `class ToolCatalog(providers: List<ToolProvider>) { suspend fun select(names: List<String>): List<Tool> }` (nome desconhecido = erro de montagem); prompts neutros `ORCHESTRATOR_PROMPT`, `KNOWLEDGE_PROMPT`, `ORDERS_PROMPT`, `ESCALATION_PROMPT` (sem marca); `cli`: `suspend fun assemble(events: EventSink): Agent` (orquestrador com os 3 especialistas) e `Main` que lê uma pergunta e imprime a resposta.
 
 - [ ] **Step 1:** Claude escreve o guia: subagente é uma ferramenta; contexto e ferramentas por agente; `coroutineScope` + `async` para turnos com várias chamadas; ordem dos resultados preservada.
 - [ ] **Step 2:** Testes (Diego): `duas chamadas no mesmo turno rodam em paralelo` (`runTest`, cada ferramenta com `delay(1000)`, tempo virtual total = 1000, não 2000); `resultados voltam na ordem dos pedidos`; `erro em uma ferramenta não cancela a outra`; `subAgentTool executa o agente com a tarefa e devolve a resposta`; `ToolCatalog.select lança erro para nome desconhecido`; `o orquestrador montado não tem nenhuma ferramenta de dados`; `dois pedidos paralelos de create_ticket para o mesmo e-mail resultam em um ticket` (usa o `TicketGateway` em memória do teste; passa de verdade só com a Tarefa 7, então aqui fica `@Ignore` com o motivo e é ativado na 7).
@@ -190,11 +191,11 @@
 - Test: `core/src/commonTest/.../answer/SupportAnswerValidatorTest.kt`, `contract/src/commonTest/.../SupportAnswerSerializationTest.kt`
 
 **Interfaces:**
-- Produces: `@Serializable data class SupportAnswer(answer: String = "", intent: String = "outro", sources: List<String> = emptyList(), confidence: Double = 0.0, escalated: Boolean = false, @SerialName("ticket_id") ticketId: String? = null)`; `val INTENTS = listOf("politica", "pedido", "devolucao", "reclamacao", "outro")`; `object SupportAnswerValidator { fun problems(answer: SupportAnswer, evidence: List<String>): List<String> }`; `val SUPPORT_ANSWER_SCHEMA: OutputSchema` (nome `responder_cliente`).
+- Produces: `@Serializable data class SupportAnswer(answer: String = "", intent: String = "other", sources: List<String> = emptyList(), confidence: Double = 0.0, escalated: Boolean = false, @SerialName("ticket_id") ticketId: String? = null)`; `val INTENTS = listOf("policy", "order", "return", "complaint", "other")`; `object SupportAnswerValidator { fun problems(answer: SupportAnswer, evidence: List<String>): List<String> }`; `val SUPPORT_ANSWER_SCHEMA: OutputSchema` (nome `answer_customer`).
 
-- [ ] **Step 1:** Testes: `ticket que não aparece nos resultados é "inventado"` (ex.: `TCK-9999`); `confidence 1.7 é problema`; `escalated=true sem ticket_id é problema`; `ticket_id ausente do texto ao cliente é problema`; `confiança 0.3 sem escalar é problema`; `fonte citada que não aparece nos resultados é problema`; `intent fora de INTENTS é problema`; `JSON só com {"answer":"Oi"} decodifica com os padrões`; `resultado SEM_RESPOSTA do conhecimento não produz fonte`.
+- [ ] **Step 1:** Testes: `ticket que não aparece nos resultados é "inventado"` (ex.: `TCK-9999`); `confidence 1.7 é problema`; `escalated=true sem ticket_id é problema`; `ticket_id ausente do texto ao cliente é problema`; `confiança 0.3 sem escalar é problema`; `fonte citada que não aparece nos resultados é problema`; `intent fora de INTENTS é problema`; `JSON só com {"answer":"Oi"} decodifica com os padrões`; `resultado NO_ANSWER do conhecimento não produz fonte`.
 - [ ] **Step 2:** Rodar `./gradlew :core:jvmTest :contract:jvmTest` → FAIL.
-- [ ] **Step 3:** Implementar; `Agent.finish` já existe (Tarefa 1) e passa o histórico mais a instrução "devolva agora a sua resposta final no formato responder_cliente".
+- [ ] **Step 3:** Implementar; `Agent.finish` já existe (Tarefa 1) e passa o histórico mais a instrução "devolva agora a sua resposta final no formato answer_customer".
 - [ ] **Step 4:** Rodar os testes → PASS.
 - [ ] **Step 5:** Commit único e tag `etapa-8.1`.
 
@@ -216,7 +217,7 @@
 ### Task 9.1: Eventos, trace e custo (etapa 9.1) [D]
 
 **Files:**
-- Create: `docs/etapas/9-1-trace.md` (guia, Claude), `core/.../trace/{TraceReport,AgentCost}.kt`, `adapters/src/jvmMain/.../trace/TraceFiles.kt`
+- Create: `docs/stages/9-1-trace.md` (guia, Claude), `core/.../trace/{TraceReport,AgentCost}.kt`, `adapters/src/jvmMain/.../trace/TraceFiles.kt`
 - Test: `core/src/commonTest/.../trace/TraceReportTest.kt`, `adapters/src/jvmTest/.../trace/TraceFilesTest.kt`
 
 **Interfaces:**
@@ -251,7 +252,7 @@
 
 **Files:**
 - Modify: `README.md`
-- Create: `docs/adr/0001-clean-architecture.md`, `0002-mcp-para-sistemas-externos.md`, `0003-cliente-llm.md` (se não existir), `docs/etapas/README.md`
+- Create: `docs/adr/0001-clean-architecture.md`, `0002-mcp-for-external-systems.md`, `0003-llm-client.md` (each with a `.pt-BR.md` twin) (se não existir), `docs/etapas/README.md`
 - Create: `.env.example` (se faltar)
 
 **Interfaces:**

@@ -1,5 +1,7 @@
 # ADR 0003 — Cliente do LLM
 
+[English](0003-llm-client.md) | [Português](0003-llm-client.pt-BR.md)
+
 Status: aceita (etapa 2)
 
 ## Contexto
