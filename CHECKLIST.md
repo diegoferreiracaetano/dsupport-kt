@@ -73,10 +73,10 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 - [ ] First end-to-end run against the API (`:cli:run`)
 
 ### E7 — Guards [M] · tag `etapa-7`
-- [ ] `IdentityGate`, `Redaction`, `RedactResults` (now wired in), `TicketDedup`, `MentionTicket`
-- [ ] ID-number, card and email patterns in a single place
-- [ ] `GuardPolicy`: a destructive tool without a guard is rejected at assembly
-- [ ] Two parallel `create_ticket` calls produce a single ticket
+- [x] `IdentityGate`, `Redaction`, `RedactResults`, `TicketDedup`, `MentionTicket` (wired in at assembly in E6)
+- [x] National id, card and email patterns in a single place (`Patterns`)
+- [x] `GuardPolicy`: a destructive tool without a guard is rejected at assembly (called at assembly in E6)
+- [x] Two parallel `create_ticket` calls produce a single ticket (guard level; end to end in E6)
 
 ### E8.1 — Typed output [M] · tag `etapa-8.1`
 - [ ] Complete `SupportAnswer` in `contract`

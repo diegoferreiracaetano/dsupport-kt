@@ -73,10 +73,10 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [ ] Primeira execução de ponta a ponta com a API (`:cli:run`)
 
 ### E7 — Guardas [M] · tag `etapa-7`
-- [ ] `IdentityGate`, `Redaction`, `RedactResults` (agora ligada), `TicketDedup`, `MentionTicket`
-- [ ] Padrões de CPF, cartão e e-mail num lugar só
-- [ ] `GuardPolicy`: ferramenta destrutiva sem guarda é rejeitada na montagem
-- [ ] Dois `create_ticket` paralelos geram um ticket só
+- [x] `IdentityGate`, `Redaction`, `RedactResults`, `TicketDedup`, `MentionTicket` (ligadas na montagem, na E6)
+- [x] Padrões de documento, cartão e e-mail num lugar só (`Patterns`)
+- [x] `GuardPolicy`: ferramenta destrutiva sem guarda é rejeitada na montagem (chamada na montagem, na E6)
+- [x] Dois `create_ticket` paralelos geram um ticket só (no nível da guarda; de ponta a ponta na E6)
 
 ### E8.1 — Saída tipada [M] · tag `etapa-8.1`
 - [ ] `SupportAnswer` completo no `contract`

@@ -162,9 +162,9 @@
 - Produces: `fun subAgentTool(name: String, description: String, agent: Agent): Tool` (entrada `{ "task": string }`); `@Serializable data class AgentDef(tools: List<String>, maxTurns: Int = 4)`; `@Serializable data class AgentsConfig(agents: Map<String, AgentDef>)`; `class ToolCatalog(providers: List<ToolProvider>) { suspend fun select(names: List<String>): List<Tool> }` (nome desconhecido = erro de montagem); prompts neutros `ORCHESTRATOR_PROMPT`, `KNOWLEDGE_PROMPT`, `ORDERS_PROMPT`, `ESCALATION_PROMPT` (sem marca); `cli`: `suspend fun assemble(events: EventSink): Agent` (orquestrador com os 3 especialistas) e `Main` que lê uma pergunta e imprime a resposta.
 
 - [ ] **Step 1:** Claude escreve o guia: subagente é uma ferramenta; contexto e ferramentas por agente; `coroutineScope` + `async` para turnos com várias chamadas; ordem dos resultados preservada.
-- [ ] **Step 2:** Testes (Diego): `duas chamadas no mesmo turno rodam em paralelo` (`runTest`, cada ferramenta com `delay(1000)`, tempo virtual total = 1000, não 2000); `resultados voltam na ordem dos pedidos`; `erro em uma ferramenta não cancela a outra`; `subAgentTool executa o agente com a tarefa e devolve a resposta`; `ToolCatalog.select lança erro para nome desconhecido`; `o orquestrador montado não tem nenhuma ferramenta de dados`; `dois pedidos paralelos de create_ticket para o mesmo e-mail resultam em um ticket` (usa o `TicketGateway` em memória do teste; passa de verdade só com a Tarefa 7, então aqui fica `@Ignore` com o motivo e é ativado na 7).
+- [ ] **Step 2:** Testes (Diego): `duas chamadas no mesmo turno rodam em paralelo` (`runTest`, cada ferramenta com `delay(1000)`, tempo virtual total = 1000, não 2000); `resultados voltam na ordem dos pedidos`; `erro em uma ferramenta não cancela a outra`; `subAgentTool executa o agente com a tarefa e devolve a resposta`; `ToolCatalog.select lança erro para nome desconhecido`; `o orquestrador montado não tem nenhuma ferramenta de dados`; `dois pedidos paralelos de create_ticket para o mesmo e-mail resultam em um ticket` (usa o `TicketDedup` da Tarefa 7, já pronta, sobre um `TicketGateway` simulado).
 - [ ] **Step 3:** Rodar `./gradlew :core:jvmTest` → FAIL.
-- [ ] **Step 4:** Diego implementa; prompts migrados do estudo e neutralizados; `config/agents.json` define as ferramentas de cada especialista (lista de permissão).
+- [ ] **Step 4:** Diego implementa; prompts migrados do estudo e neutralizados; `config/agents.json` define as ferramentas de cada especialista (lista de permissão). Ligar as guardas da Tarefa 7 na montagem (`Redaction`, `IdentityGate`, `RedactResults`, `MentionTicket` e, por último, `TicketDedup`) e chamar `GuardPolicy().validate(tools, hooks)`.
 - [ ] **Step 5:** Rodar `./gradlew :core:jvmTest :core:compileKotlinWasmJs` → PASS. Rodar `./gradlew :cli:run` com `ANTHROPIC_API_KEY` exportada (pelo Diego) e conferir a resposta a "Qual o prazo para devolver um produto?".
 - [ ] **Step 6:** Commit único e tag `etapa-6`.
 
@@ -183,7 +183,7 @@
 - [ ] **Step 2:** Rodar `./gradlew :core:jvmTest --tests "dsupport.core.guard.*"` → FAIL.
 - [ ] **Step 3:** Implementar. As três expressões regulares vivem só em `Patterns`; `IdentityGate` valida `order_id` com dígitos e `email` com `Patterns.email`.
 - [ ] **Step 4:** Rodar `./gradlew :core:jvmTest :core:compileKotlinWasmJs` → PASS (o teste da Tarefa 6 agora ativo).
-- [ ] **Step 5:** Ligar as 5 guardas (incluindo `RedactResults`) na montagem do `cli` e chamar `GuardPolicy.validate`.
+- [ ] **Step 5:** A ligação das guardas na montagem (incluindo `RedactResults`, com `TicketDedup` por último entre as de `create_ticket`) e a chamada a `GuardPolicy.validate` ficam na Tarefa 6, porque o `cli` ainda é provisório. Ruling: a Tarefa 7 foi feita antes da 6.
 - [ ] **Step 6:** Commit único e tag `etapa-7`.
 
 ### Task 8.1: Saída tipada (etapa 8.1) [M]

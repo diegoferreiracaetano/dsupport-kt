@@ -1,6 +1,9 @@
 package dsupport.core.agent
 
 import dsupport.contract.AgentEvent
+import dsupport.contract.GuardAction
+import dsupport.core.guard.Decision
+import dsupport.core.guard.Hook
 import dsupport.core.llm.LlmClient
 import dsupport.core.llm.LlmReply
 import dsupport.core.llm.LlmRequest
@@ -21,6 +24,7 @@ class Agent(
     private val llm: LlmClient,
     private val system: String,
     tools: List<Tool>,
+    private val hooks: List<Hook> = emptyList(),
     private val events: EventSink = EventSink.None,
     private val maxTurns: Int = 5,
     private val depth: Int = 0,
@@ -60,8 +64,9 @@ class Agent(
             )
             when (reply) {
                 is LlmReply.Text -> {
-                    history += Message.AssistantText(reply.text)
-                    return reply.text
+                    val text = finalAnswer(reply.text)
+                    history += Message.AssistantText(text)
+                    return text
                 }
                 is LlmReply.ToolCalls -> {
                     history += Message.AssistantToolCalls(reply.calls)
@@ -75,19 +80,57 @@ class Agent(
         return "Turn limit of $maxTurns reached. Escalating to a human agent."
     }
 
+    private suspend fun finalAnswer(proposed: String): String = hooks.fold(proposed) { current, hook ->
+        val next = hook.beforeFinal(name, history.toList(), current)
+        if (next != current) {
+            events.emit(AgentEvent.GuardActed(name, hook.name, null, GuardAction.REWRITE, "final answer rewritten"))
+        }
+        next
+    }
+
     private suspend fun execute(toolName: String, args: JsonObject): ToolResult {
         events.emit(AgentEvent.ToolStarted(name, toolName, args.toString()))
         val mark = TimeSource.Monotonic.markNow()
-        val result = try {
-            toolsByName[toolName]?.run(args) ?: ToolResult("error: tool '$toolName' does not exist", isError = true)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            ToolResult("error running '$toolName': ${e.message}", isError = true)
+        val tool = toolsByName[toolName]
+        val result = if (tool == null) {
+            ToolResult("error: tool '$toolName' does not exist", isError = true)
+        } else {
+            guarded(tool, args)
         }
         events.emit(
             AgentEvent.ToolFinished(name, toolName, result.content, result.isError, mark.elapsedNow().inWholeMilliseconds),
         )
         return result
+    }
+
+    private suspend fun guarded(tool: Tool, requested: JsonObject): ToolResult {
+        var args = requested
+        for (hook in hooks) {
+            when (val decision = hook.beforeTool(name, tool.spec, args)) {
+                Decision.Allow -> Unit
+                is Decision.Deny -> {
+                    events.emit(AgentEvent.GuardActed(name, hook.name, tool.spec.name, GuardAction.DENY, decision.reason))
+                    return ToolResult("blocked by ${hook.name}: ${decision.reason}", isError = true)
+                }
+                is Decision.Modify -> {
+                    events.emit(AgentEvent.GuardActed(name, hook.name, tool.spec.name, GuardAction.MODIFY, "arguments changed"))
+                    args = decision.args
+                }
+            }
+        }
+        val raw = try {
+            tool.run(args)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            ToolResult("error running '${tool.spec.name}': ${e.message}", isError = true)
+        }
+        return hooks.fold(raw) { current, hook ->
+            val next = hook.afterTool(name, tool.spec, args, current)
+            if (next != current) {
+                events.emit(AgentEvent.GuardActed(name, hook.name, tool.spec.name, GuardAction.REWRITE, "result rewritten"))
+            }
+            next
+        }
     }
 }

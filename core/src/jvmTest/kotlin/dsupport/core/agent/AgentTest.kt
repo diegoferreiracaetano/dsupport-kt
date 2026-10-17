@@ -1,6 +1,9 @@
 package dsupport.core.agent
 
 import dsupport.contract.AgentEvent
+import dsupport.contract.GuardAction
+import dsupport.core.guard.Decision
+import dsupport.core.guard.Hook
 import dsupport.core.llm.LlmClient
 import dsupport.core.llm.LlmReply
 import dsupport.core.llm.LlmRequest
@@ -40,8 +43,15 @@ class AgentTest {
         coEvery { llm.next(capture(requests)) } returnsMany replies.toList()
     }
 
-    private fun agent(tools: List<Tool> = listOf(echo), maxTurns: Int = 5) =
-        Agent("support", llm, "Be friendly.", tools, sink, maxTurns)
+    private fun agent(tools: List<Tool> = listOf(echo), hooks: List<Hook> = emptyList(), maxTurns: Int = 5) =
+        Agent("support", llm, "Be friendly.", tools, hooks, sink, maxTurns)
+
+    private fun hook(name: String = "TestHook") = mockk<Hook>().also {
+        every { it.name } returns name
+        coEvery { it.beforeTool(any(), any(), any()) } returns Decision.Allow
+        coEvery { it.afterTool(any(), any(), any(), any()) } answers { arg<ToolResult>(3) }
+        coEvery { it.beforeFinal(any(), any(), any()) } answers { arg<String>(2) }
+    }
 
     private fun call(id: String, tool: String) = ToolCall(id, tool, buildJsonObject { put("text", "hi") })
 
@@ -154,5 +164,75 @@ class AgentTest {
         val messages = structured.single().messages
         assertEquals(Message.User("question"), messages.first())
         assertTrue("answer_format" in (messages.last() as Message.User).text)
+    }
+
+    @Test
+    fun `given a hook that denies the call when the model asks for a tool then should not run it and tell the model it was blocked`() = runTest {
+        val blocker = hook("Blocker").also {
+            coEvery { it.beforeTool("support", any(), any()) } returns Decision.Deny("not allowed")
+        }
+        repliesAre(toolCalls(call("t1", "echo")), LlmReply.Text("understood", usage))
+
+        agent(hooks = listOf(blocker)).run("echo this")
+
+        coVerify(exactly = 0) { echo.run(any()) }
+        val result = requests[1].messages.filterIsInstance<Message.ToolResult>().single()
+        assertTrue(result.isError)
+        assertTrue("Blocker" in result.content && "not allowed" in result.content)
+        assertTrue(events.contains(AgentEvent.GuardActed("support", "Blocker", "echo", GuardAction.DENY, "not allowed")))
+    }
+
+    @Test
+    fun `given a hook that modifies the arguments when the model asks for a tool then should run the tool with the new arguments`() = runTest {
+        val changed = buildJsonObject { put("text", "clean") }
+        val modifier = hook("Modifier").also {
+            coEvery { it.beforeTool("support", any(), any()) } returns Decision.Modify(changed)
+        }
+        repliesAre(toolCalls(call("t1", "echo")), LlmReply.Text("done", usage))
+
+        agent(hooks = listOf(modifier)).run("echo this")
+
+        coVerify { echo.run(changed) }
+        assertTrue(events.any { it is AgentEvent.GuardActed && it.action == GuardAction.MODIFY })
+    }
+
+    @Test
+    fun `given a hook that rewrites results when a tool finishes then should send the rewritten result to the model`() = runTest {
+        val rewriter = hook("Rewriter").also {
+            coEvery { it.beforeTool(any(), any(), any()) } returns Decision.Allow
+            coEvery { it.afterTool("support", any(), any(), any()) } returns ToolResult("rewritten")
+        }
+        repliesAre(toolCalls(call("t1", "echo")), LlmReply.Text("done", usage))
+
+        agent(hooks = listOf(rewriter)).run("echo this")
+
+        assertEquals("rewritten", requests[1].messages.filterIsInstance<Message.ToolResult>().single().content)
+        assertTrue(events.any { it is AgentEvent.GuardActed && it.action == GuardAction.REWRITE && it.tool == "echo" })
+    }
+
+    @Test
+    fun `given a hook that rewrites the final answer when the model replies then should return the rewritten answer`() = runTest {
+        val closer = hook("Closer").also {
+            coEvery { it.beforeFinal("support", any(), "done") } returns "done, ticket TCK-1001"
+        }
+        repliesAre(LlmReply.Text("done", usage))
+
+        val answer = agent(hooks = listOf(closer)).run("hello")
+
+        assertEquals("done, ticket TCK-1001", answer)
+        assertTrue(events.contains(AgentEvent.GuardActed("support", "Closer", null, GuardAction.REWRITE, "final answer rewritten")))
+    }
+
+    @Test
+    fun `given two hooks when the model asks for a tool then should consult them in order and stop at the first denial`() = runTest {
+        val first = hook("First").also {
+            coEvery { it.beforeTool(any(), any(), any()) } returns Decision.Deny("first says no")
+        }
+        val second = hook("Second")
+        repliesAre(toolCalls(call("t1", "echo")), LlmReply.Text("done", usage))
+
+        agent(hooks = listOf(first, second)).run("echo this")
+
+        coVerify(exactly = 0) { second.beforeTool(any(), any(), any()) }
     }
 }
