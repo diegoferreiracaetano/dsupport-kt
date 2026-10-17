@@ -6,6 +6,7 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - Plano da fase 1: `docs/superpowers/plans/2026-10-17-dsupport-nucleo.md`
 
 **Como usar:** um item por vez, na ordem. Eu explico antes, você confirma depois de testar. Cada etapa fecha com um commit e a tag `etapa-N`.
+**Testes:** uma classe por teste, MockK, nomes `given … when … then should …`, em `jvmTest`.
 **Código:** sem comentários (só KDoc quando for documentação) e tudo em inglês: nomes, mensagens, KDoc e nomes de teste.
 **Autor:** **[M]** Claude faz · **[D]** Diego escreve, com guia prévio em `docs/etapas/`.
 
@@ -32,7 +33,7 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [x] `AgentEvent` no `contract`
 - [x] Portas `LlmClient`, `Tool`, `ToolProvider`, `EventSink`
 - [x] `Agent` com loop, limite de turnos e ferramenta inexistente tratada
-- [x] `ScriptedLlmClient` e `LlmClientContract` no módulo `testing`
+- [x] `LlmClientContract` no módulo `testing`; testes do `Agent` com MockK
 
 ### E2 — Cliente do LLM [D] · tag `etapa-2`
 - [ ] Guia `docs/etapas/2-llm-client.md`

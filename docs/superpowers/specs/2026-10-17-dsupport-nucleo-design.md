@@ -46,7 +46,7 @@ dsupport-kt/
 ├── adapters/      KMP · commonMain (LLM via Ktor client, RAG) + jvmMain (arquivos, cliente MCP stdio)
 ├── mcp-orders/    JVM · servidor MCP de pedidos (SDK oficial, processo separado)
 ├── mcp-tickets/   JVM · servidor MCP de tickets (idem)
-├── testing/       KMP (jvm + wasmJs) · modelos falsos e suíte de contrato, só para testes
+├── testing/       KMP (jvm) · suíte de contrato do LlmClient, só para testes
 ├── cli/           JVM · ponto de entrada de linha de comando e a montagem (composition root)
 ├── eval/          JVM · golden dataset, runner e relatório
 ├── data/          kb/, orders.json, tickets.json, golden.json
@@ -160,12 +160,11 @@ Os padrões de CPF, cartão e e-mail ficam num único lugar (`guard/Patterns.kt`
   Tempo, arquivo e processo entram por portas, implementadas em `jvmMain` de `adapters`.
 - Código que hoje usa API só da JVM (`Normalizer` no TF-IDF, leitura de `data/`, cliente MCP via stdio)
   vai para `jvmMain`, atrás de uma porta. Evitamos `expect/actual` quando uma porta resolve.
-- Na fase 1, `contract`, `core` e `testing` habilitam `jvm` e `wasmJs` (o `testing` precisa dos mesmos alvos do `core`, porque os
-  testes em `commonTest` do `core` o usam); `adapters` e as aplicações habilitam só `jvm`. Os testes
-  rodam na JVM (rápidos, sem emulador). A garantia de que o código compartilhado é portátil vem de compilar o alvo
+- Na fase 1, `contract` e `core` habilitam `jvm` e `wasmJs`; `testing`, `adapters` e as aplicações habilitam só `jvm`.
+  Os testes rodam na JVM (rápidos, sem emulador) e usam MockK, que só existe na JVM: ficam em `jvmTest`. A garantia de que o código compartilhado é portátil vem de compilar o alvo
   Wasm (`compileKotlinWasmJs`) num job de CI desde a etapa 0. iOS e Android entram na fase 2, com o app.
-- Projetos multiplataforma não têm `testFixtures`: o modelo falso, o modelo roteirizado e a suíte `LlmClientContract`
-  ficam no módulo KMP `testing`, usado apenas como dependência de teste.
+- Projetos multiplataforma não têm `testFixtures`: a suíte `LlmClientContract` fica no módulo `testing`,
+  usado apenas como dependência de teste.
 - `mcp-orders`, `mcp-tickets`, `cli`, `eval` e `server` são aplicações JVM comuns que consomem os módulos KMP.
 
 ## 5. Etapas (uma tag por etapa)
@@ -199,7 +198,9 @@ Reaproveitados do estudo e **limpos de qualquer marca**. O `tickets.json` volta 
 ## 7. Testes e qualidade
 
 - `kotlin.test` + JUnit 5 em cada módulo. O `./gradlew test` roda tudo offline, sem chave.
-- `LlmClient` falso e roteirizado só no módulo `testing`; nenhum modelo falso em código de produção.
+- Cada teste é sobre uma classe de produção, com os colaboradores simulados por MockK (`coEvery`/`coVerify`).
+  Nomes no formato `given <context> when <action> then should <result>`, em inglês e sem comentários.
+  Para a fronteira HTTP do Ktor usa-se o `MockEngine`. Nenhum dublê em código de produção.
 - Testes de contrato para `LlmClient` e `ToolProvider`.
 - CI (GitHub Actions): testes a cada push. A avaliação com API roda sob demanda; o relatório fica versionado.
 - Segredos só por variável de ambiente (`ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`); `.env.example` no repositório.

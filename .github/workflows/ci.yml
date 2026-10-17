@@ -17,4 +17,4 @@ jobs:
       - name: Testes offline (JVM)
         run: ./gradlew test
       - name: Compila o código e os testes compartilhados para Wasm
-        run: ./gradlew :contract:wasmJsTestClasses :core:wasmJsTestClasses :testing:wasmJsTestClasses
+        run: ./gradlew :contract:wasmJsTestClasses :core:wasmJsTestClasses

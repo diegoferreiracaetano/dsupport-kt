@@ -14,7 +14,7 @@
 
 - Toolchain da JVM: JDK 21. O JDK 26 do sistema não roda o Gradle 8.10; fixar o JVM do daemon em `gradle/gradle-daemon-jvm.properties`, sem tocar em `~/.gradle`.
 - Pacote raiz: `dsupport` (`dsupport.contract`, `dsupport.core`, `dsupport.adapters`…).
-- `contract` e `core` têm só `commonMain` e `commonTest`; proibido `java.*`, `File`, `ProcessBuilder` e Gson. Alvos de `contract`, `core` e `testing`: `jvm` e `wasmJs` (testes só na JVM; o Wasm compila código e testes). `adapters` e aplicações: só `jvm`.
+- `contract` e `core` têm só `commonMain` e `commonTest`; proibido `java.*`, `File`, `ProcessBuilder` e Gson. Alvos de `contract` e `core`: `jvm` e `wasmJs` (testes só na JVM; o Wasm compila código e testes). `testing`, `adapters` e aplicações: só `jvm`.
 - Serialização: `kotlinx.serialization` em todo lugar.
 - LLM: o `core` não importa nada de provedor; só a porta `LlmClient`.
 - Ferramenta destrutiva sem guarda que a cubra é rejeitada na montagem.
@@ -22,6 +22,7 @@
 - Nenhuma marca de loja nos dados nem nos prompts.
 - `data/tickets.json` volta a `[]` antes de cada commit; `traces/` no `.gitignore`; `reports/` versionado.
 - Revisões do revisor: no máximo 2 (`maxRevisions = 2`); `maxTurns` padrão do agente = 5.
+- **Test style:** each test targets one production class, collaborators are MockK mocks (`coEvery`/`coVerify`), names follow `given <context> when <action> then should <result>`, in `jvmTest` because MockK is JVM-only. Ktor HTTP boundaries use `MockEngine`. The test names in this plan are descriptions: write them in that format.
 - **Code style:** no comments in code (KDoc only, where it serves as documentation). Identifiers, KDoc, error messages, log text and test names in English. The test names and messages written in Portuguese in this plan are descriptions: write them in English. Customer-facing text (knowledge-base articles, agent prompts, replies) is product content and is decided separately.
 - **Commits:** um commit por etapa, ao final dela, só no nome do usuário (sem `Co-Authored-By`), seguido da tag `etapa-N`. Não commitar por passo.
 - **Autoria:** tarefas marcadas **[D]** são escritas por Diego, depois de um guia em `docs/etapas/N.md` escrito antes por Claude; Claude revisa e roda os testes. As marcadas **[M]** são feitas por Claude.
@@ -51,8 +52,8 @@
 - [ ] **Step 1:** Resolver as versões atuais de Kotlin, Gradle, coroutines, serialization, datetime, Ktor, kotlin-sdk (MCP) e JUnit consultando Maven Central/releases; registrá-las em `libs.versions.toml`. Escolher um Gradle que rode no JDK 21 e um Kotlin compatível com ele.
 - [ ] **Step 2:** Escrever `SmokeTest` (`fun `core compila e roda`() = assertEquals(2, 1 + 1)`) em `commonTest` do `core`.
 - [ ] **Step 3:** Rodar `./gradlew :core:jvmTest` → FAIL (projeto ainda sem módulos).
-- [ ] **Step 4:** Criar o build multi-módulo; `contract`, `core` e `testing` com `jvm()` + `wasmJs { browser() }`; `adapters` com `jvm()`; demais módulos Kotlin/JVM com plugin `application`; gerar `gradle-daemon-jvm.properties` para o JDK 21 (`./gradlew updateDaemonJvm`).
-- [ ] **Step 5:** Rodar `./gradlew test :core:wasmJsTestClasses :contract:wasmJsTestClasses :testing:wasmJsTestClasses` → todos passam, a partir de um terminal cujo `java -version` é 26.
+- [ ] **Step 4:** Criar o build multi-módulo; `contract` e `core` com `jvm()` + `wasmJs { browser() }`; `testing` e `adapters` com `jvm()`; demais módulos Kotlin/JVM com plugin `application`; gerar `gradle-daemon-jvm.properties` para o JDK 21 (`./gradlew updateDaemonJvm`).
+- [ ] **Step 5:** Rodar `./gradlew test :core:wasmJsTestClasses :contract:wasmJsTestClasses` → todos passam, a partir de um terminal cujo `java -version` é 26.
 - [ ] **Step 6:** CI: workflow com JDK 21 rodando `./gradlew test` e a compilação Wasm. README com três linhas: o que é, como rodar os testes, requisito de JDK.
 - [ ] **Step 7:** `git init`, ajustar `.gitignore`, commit único e tag `etapa-0`.
 
@@ -61,20 +62,20 @@
 **Files:**
 - Create: `contract/src/commonMain/kotlin/dsupport/contract/AgentEvent.kt`
 - Create: `core/src/commonMain/kotlin/dsupport/core/llm/{Message,LlmClient,Usage}.kt`, `core/.../tool/{Tool,ToolSpec,ToolProvider}.kt`, `core/.../agent/{Agent,EventSink}.kt`
-- Create: `testing/src/commonMain/kotlin/dsupport/testing/{ScriptedLlmClient,LlmClientContract}.kt`
+- Create: `testing/src/commonMain/kotlin/dsupport/testing/{Scenario,LlmClientContract}.kt`
 - Test: `core/src/commonTest/kotlin/dsupport/core/agent/AgentTest.kt`
 
 **Interfaces:**
 - Produces (`contract`, `@Serializable`): `sealed interface AgentEvent` com `AgentStarted(agent: String, depth: Int, task: String)`, `ModelCalled(agent: String, inputTokens: Int, outputTokens: Int, durationMs: Long)`, `ToolStarted(agent: String, tool: String, args: String)`, `ToolFinished(agent: String, tool: String, result: String, isError: Boolean, durationMs: Long)`, `GuardActed(agent: String, guard: String, tool: String?, action: GuardAction, detail: String)`, `ReviewRound(round: Int, approved: Boolean, problems: List<String>)`, `Escalated(ticketId: String, reason: String)`, `Completed(answer: SupportAnswer)`; `enum GuardAction { DENY, MODIFY, REWRITE }`.
 - Produces (`core`): `data class ToolCall(id: String, tool: String, args: JsonObject)`; `sealed interface Message { User(text); AssistantToolCalls(calls: List<ToolCall>); ToolResult(callId: String, tool: String, content: String, isError: Boolean); AssistantText(text) }`; `data class Usage(inputTokens: Int, outputTokens: Int)`; `data class LlmRequest(system: String, messages: List<Message>, tools: List<ToolSpec>)`; `sealed interface LlmReply { usage: Usage; Text(text, usage); ToolCalls(calls, usage) }`; `data class OutputSchema(name: String, description: String, schema: JsonObject)`; `interface LlmClient { suspend fun next(request: LlmRequest): LlmReply; suspend fun structured(request: LlmRequest, schema: OutputSchema): JsonObject }`; `data class ToolSpec(name, description, inputSchema: JsonObject, readOnly: Boolean = true, destructive: Boolean = false)`; `data class ToolResult(content: String, isError: Boolean = false)`; `interface Tool { val spec: ToolSpec; suspend fun run(args: JsonObject): ToolResult }`; `interface ToolProvider { suspend fun tools(): List<Tool> }`; `fun interface EventSink { suspend fun emit(event: AgentEvent); companion object { val None } }`; `class Agent(name: String, llm: LlmClient, system: String, tools: List<Tool>, events: EventSink = EventSink.None, maxTurns: Int = 5, depth: Int = 0)` com `val evidence: List<String>`, `suspend fun run(task: String): String`, `suspend fun followUp(message: String): String`, `suspend fun finish(schema: OutputSchema): JsonObject`.
-- Produces (`testing`): `class ScriptedLlmClient(replies: List<LlmReply>, structuredReplies: List<String> = emptyList()) : LlmClient` com `val received: MutableList<LlmRequest>`; `abstract class LlmClientContract { abstract fun client(): LlmClient }` com testes de contrato.
+- Produces (`testing`): `sealed interface Scenario`; `abstract class LlmClientContract { abstract fun clientFor(scenario: Scenario): LlmClient }` com testes de contrato. Os dublês de `LlmClient` e `Tool` nos testes do `core` são mocks do MockK.
 - `SupportAnswer` é referenciado aqui; seu código nasce na Tarefa 8.1, então nesta tarefa `Completed` usa um `SupportAnswer` mínimo já em `contract` (`data class SupportAnswer(val answer: String = "")`), ampliado na 8.1.
 
 - [ ] **Step 1:** Testes em `AgentTest`: `devolve a resposta final quando o modelo responde texto`; `executa a ferramenta pedida, devolve o resultado ao modelo e termina` (a segunda requisição contém `Message.ToolResult` com o mesmo `callId`); `ferramenta inexistente volta como ToolResult(isError=true) sem derrubar o loop`; `para em maxTurns e devolve "Limite de 5 turnos atingido. Encaminhando a um atendente."`; `emite AgentStarted, ModelCalled, ToolStarted, ToolFinished nessa ordem`.
 - [ ] **Step 2:** Rodar `./gradlew :core:jvmTest --tests "dsupport.core.agent.AgentTest"` → FAIL (tipos não existem).
-- [ ] **Step 3:** Implementar os tipos acima e o `Agent` (loop sequencial; o histórico guarda o pedido original do modelo; `evidence` = conteúdo dos `ToolResult`). `ScriptedLlmClient` falha com erro claro se as respostas acabarem.
-- [ ] **Step 4:** Escrever `LlmClientContract` (reply de texto, reply de ferramenta com id preservado, `structured` devolve objeto) e fazer `ScriptedLlmClient` passar nele (`ScriptedLlmClientContractTest`).
-- [ ] **Step 5:** Rodar `./gradlew :core:jvmTest :testing:jvmTest :core:compileKotlinWasmJs` → PASS.
+- [ ] **Step 3:** Implementar os tipos acima e o `Agent` (loop sequencial; o histórico guarda o pedido original do modelo; `evidence` = conteúdo dos `ToolResult`).
+- [ ] **Step 4:** Escrever `LlmClientContract` (reply de texto, reply de ferramenta com id preservado, `structured` devolve objeto); o primeiro cliente a passar nele é o da Tarefa 2.
+- [ ] **Step 5:** Rodar `./gradlew :core:jvmTest :contract:jvmTest :core:compileKotlinWasmJs` → PASS.
 - [ ] **Step 6:** Commit único e tag `etapa-1`.
 
 ### Task 2: `AnthropicLlmClient` (etapa 2) [D]
@@ -174,7 +175,7 @@
 - Produces: `sealed interface Decision { Allow; Deny(reason: String); Modify(args: JsonObject) }`; `interface Hook { val name: String; val covers: Set<String>; suspend fun beforeTool(agent: String, tool: ToolSpec, args: JsonObject): Decision; suspend fun afterTool(agent: String, tool: ToolSpec, result: ToolResult): ToolResult; suspend fun beforeFinal(agent: String, history: List<Message>, text: String): String }` (todos com implementação padrão neutra); `object Patterns { val cpf: Regex; val card: Regex; val email: Regex }`; `class IdentityGate`, `Redaction`, `RedactResults`, `class TicketDedup(tickets: TicketGateway)`, `MentionTicket`; `object GuardPolicy { fun validate(tools: List<Tool>, hooks: List<Hook>) }` (lança se há ferramenta `destructive` sem nenhum hook que a cubra em `covers`).
 - Modify `Agent`: novo parâmetro `hooks: List<Hook> = emptyList()` após `tools`.
 
-- [ ] **Step 1:** Testes portados do estudo, agora sobre `ScriptedLlmClient`: `IdentityGate bloqueia get_order_status sem e-mail e sem order_id numérico`; `Redaction remove CPF "123.456.789-00" e cartão "4111 1111 1111 1111" dos argumentos de create_ticket e não toca no customer_email`; `RedactResults limpa o resultado devolvido por um especialista`; `TicketDedup bloqueia o segundo ticket do mesmo e-mail e devolve o número existente`; `MentionTicket acrescenta "Número do seu chamado: TCK-1001." quando a resposta final não cita o ticket`; `cada guarda emite GuardActed`; `GuardPolicy.validate rejeita create_ticket sem guarda`; ativar o teste paralelo da Tarefa 6: `dois create_ticket paralelos para o mesmo e-mail → um único ticket` (a checagem e a criação ficam sob um `Mutex` no `TicketDedup`/gateway).
+- [ ] **Step 1:** Testes portados do estudo, agora com mocks do MockK para `LlmClient` e `Tool`: `IdentityGate bloqueia get_order_status sem e-mail e sem order_id numérico`; `Redaction remove CPF "123.456.789-00" e cartão "4111 1111 1111 1111" dos argumentos de create_ticket e não toca no customer_email`; `RedactResults limpa o resultado devolvido por um especialista`; `TicketDedup bloqueia o segundo ticket do mesmo e-mail e devolve o número existente`; `MentionTicket acrescenta "Número do seu chamado: TCK-1001." quando a resposta final não cita o ticket`; `cada guarda emite GuardActed`; `GuardPolicy.validate rejeita create_ticket sem guarda`; ativar o teste paralelo da Tarefa 6: `dois create_ticket paralelos para o mesmo e-mail → um único ticket` (a checagem e a criação ficam sob um `Mutex` no `TicketDedup`/gateway).
 - [ ] **Step 2:** Rodar `./gradlew :core:jvmTest --tests "dsupport.core.guard.*"` → FAIL.
 - [ ] **Step 3:** Implementar. As três expressões regulares vivem só em `Patterns`; `IdentityGate` valida `order_id` com dígitos e `email` com `Patterns.email`.
 - [ ] **Step 4:** Rodar `./gradlew :core:jvmTest :core:compileKotlinWasmJs` → PASS (o teste da Tarefa 6 agora ativo).

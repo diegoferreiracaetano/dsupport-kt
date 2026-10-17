@@ -25,14 +25,14 @@ abstract class LlmClientContract {
     private val schema = OutputSchema("responder", "Final answer.", buildJsonObject { put("type", "object") })
 
     @Test
-    fun `text becomes LlmReply Text`() = runTest {
+    fun `given a provider that answers with text when asking for the next reply then should return a Text reply`() = runTest {
         val reply = clientFor(Scenario.Text("Your order arrives tomorrow.")).next(request)
 
         assertEquals("Your order arrives tomorrow.", assertIs<LlmReply.Text>(reply).text)
     }
 
     @Test
-    fun `tool request keeps id name and arguments`() = runTest {
+    fun `given a provider that requests a tool when asking for the next reply then should keep the id, name and arguments`() = runTest {
         val args = buildJsonObject { put("order_id", "1042") }
         val reply = clientFor(Scenario.ToolCall("call_1", "get_order_status", args)).next(request)
 
@@ -43,7 +43,7 @@ abstract class LlmClientContract {
     }
 
     @Test
-    fun `structured output returns the object`() = runTest {
+    fun `given a provider that answers with a JSON object when asking for a structured reply then should return that object`() = runTest {
         val expected: JsonObject = buildJsonObject { put("answer", "ok") }
 
         assertEquals(expected, clientFor(Scenario.Structured(expected)).structured(request, schema))
