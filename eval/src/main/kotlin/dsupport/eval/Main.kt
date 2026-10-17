@@ -12,6 +12,8 @@ import kotlin.system.exitProcess
 
 private const val REQUEST_TIMEOUT_MS = 120_000L
 
+private val REPORT_STAMP = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmm")
+
 /** "Late" depends on today, so the evaluation pins the date: its results must not change with the calendar. */
 private val EVAL_REFERENCE_DATE = LocalDate(2026, 10, 15)
 
@@ -32,9 +34,11 @@ suspend fun main(args: Array<String>) {
 
         val results = runner.run(cases, only = args.toSet())
 
-        val today = java.time.LocalDate.now()
-        val markdown = EvalReport(results).toMarkdown("Evaluation $today (${settings.modelId}, reference date $EVAL_REFERENCE_DATE)")
-        val report = Path.of("reports", "eval-$today.md")
+        val now = java.time.LocalDateTime.now()
+        val markdown = EvalReport(results).toMarkdown(
+            "Evaluation ${now.toLocalDate()} (${settings.modelId}, reference date $EVAL_REFERENCE_DATE)",
+        )
+        val report = Path.of("reports", "eval-${now.format(REPORT_STAMP)}.md")
         Files.createDirectories(report.parent)
         Files.writeString(report, markdown)
         println("\n$markdown")

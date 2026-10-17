@@ -2,6 +2,7 @@ package dsupport.eval
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -20,7 +21,8 @@ class EvalReportTest {
         modelCalls: Int = 1,
         tokens: Int = 1000,
         error: String? = null,
-    ) = CaseResult(id, intentOk, escalated, shouldEscalate, grounded, factsOk, sourcesOk, leakFree, problems, ms, modelCalls, tokens, error)
+        misses: List<String> = emptyList(),
+    ) = CaseResult(id, intentOk, escalated, shouldEscalate, grounded, factsOk, sourcesOk, leakFree, problems, ms, modelCalls, tokens, error, misses)
 
     private val mixed = listOf(
         result("tp", escalated = true, shouldEscalate = true),
@@ -88,6 +90,35 @@ class EvalReportTest {
         assertTrue("| Groundedness (code checks) | 80% |" in markdown)
         assertTrue("| invented |" in markdown && "ticket TCK-9999 is invented" in markdown)
         assertTrue("5 cases, 0 with an execution error." in markdown)
+    }
+
+    @Test
+    fun `given a case with misses when rendering the markdown then should explain it under cases to look at`() {
+        val failing = result(
+            "g12", escalated = true, shouldEscalate = false, factsOk = false,
+            misses = listOf("missing fact: 'email'", "escalated=true but expected false"),
+        ).copy(question = "Where is my order 1042?", intent = "order", answer = "I opened a ticket for you.")
+
+        val markdown = EvalReport(listOf(failing, result("g01"))).toMarkdown("Report")
+
+        assertTrue("## Cases to look at" in markdown)
+        assertTrue("### g12" in markdown)
+        assertTrue("- Question: Where is my order 1042?" in markdown)
+        assertTrue("- Answer: I opened a ticket for you." in markdown)
+        assertTrue("- Misses: missing fact: 'email'; escalated=true but expected false" in markdown)
+        assertFalse("### g01" in markdown)
+    }
+
+    @Test
+    fun `given only passing cases when rendering the markdown then should not add the cases to look at section`() {
+        assertFalse("Cases to look at" in EvalReport(listOf(result("g01"))).toMarkdown("Report"))
+    }
+
+    @Test
+    fun `given a case with misses when rendering the case table then should show them in the notes`() {
+        val markdown = EvalReport(listOf(result("g12", misses = listOf("missing fact: 'email'")))).toMarkdown("Report")
+
+        assertTrue("| g12 |" in markdown && "missing fact: 'email' |" in markdown)
     }
 
     @Test

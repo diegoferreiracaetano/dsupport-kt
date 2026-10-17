@@ -15,4 +15,8 @@ data class CaseResult(
     val modelCalls: Int,
     val tokens: Int,
     val error: String? = null,
+    val misses: List<String> = emptyList(),
+    val question: String = "",
+    val intent: String = "",
+    val answer: String = "",
 )

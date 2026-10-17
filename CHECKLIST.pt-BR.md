@@ -100,7 +100,7 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [x] Golden dataset de 15 casos, neutralizado (com verificação de vazamento, `must_not_contain`)
 - [x] Pontuação e relatório com as 6 métricas (roteamento, groundedness, fatos, fontes, precisão e recall de escalação) + uma métrica de vazamento, latência e tokens
 - [x] `EvalRunner` continua depois de um caso com erro (cada caso com seu arquivo de tickets vazio e a data de referência fixa)
-- [ ] Relatório real em `reports/` (precisa da chave: `./gradlew :eval:run`)
+- [x] Relatório real em `reports/` (linha de base: `eval-2026-10-17-2043.md`; rode com `./gradlew :eval:run`)
 
 ### E10 — Fechamento da fase 1 [M] · tag `fase-1`
 - [ ] README com diagrama, como rodar, métricas e um trecho de trace

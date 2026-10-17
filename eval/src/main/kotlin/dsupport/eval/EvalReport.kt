@@ -48,12 +48,30 @@ class EvalReport(private val results: List<CaseResult>) {
         appendLine("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
         results.forEach { result ->
             val expected = result.shouldEscalate?.let { if (it) "yes" else "no" } ?: "-"
-            val notes = result.error ?: result.problems.joinToString("; ")
+            val notes = result.error ?: (result.misses + result.problems).joinToString("; ")
             appendLine(
                 "| ${result.id} | ${mark(result.intentOk)} | ${if (result.escalated) "yes" else "no"} ($expected) | " +
                     "${mark(result.grounded)} | ${mark(result.factsOk)} | ${mark(result.sourcesOk)} | " +
                     "${mark(result.leakFree)} | ${result.ms} | ${result.modelCalls} | $notes |",
             )
+        }
+        appendCasesToLookAt()
+    }
+
+    private fun StringBuilder.appendCasesToLookAt() {
+        val flagged = results.filter { it.error != null || it.misses.isNotEmpty() || it.problems.isNotEmpty() }
+        if (flagged.isEmpty()) return
+        appendLine()
+        appendLine("## Cases to look at")
+        flagged.forEach { result ->
+            appendLine()
+            appendLine("### ${result.id}")
+            appendLine("- Question: ${result.question}")
+            appendLine("- Intent: ${result.intent}")
+            appendLine("- Answer: ${result.answer}")
+            appendLine("- Misses: ${result.misses.joinToString("; ")}")
+            if (result.problems.isNotEmpty()) appendLine("- Problems: ${result.problems.joinToString("; ")}")
+            result.error?.let { appendLine("- Error: $it") }
         }
     }
 

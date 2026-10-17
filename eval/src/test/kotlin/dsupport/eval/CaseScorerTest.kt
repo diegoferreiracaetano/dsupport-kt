@@ -114,6 +114,60 @@ class CaseScorerTest {
     }
 
     @Test
+    fun `given an intent outside the expected ones when scoring then should list it among the misses`() {
+        val result = score(case(intents = listOf("policy")), answer(intent = "order"))
+
+        assertTrue(result.misses.any { "intent" in it && "order" in it && "policy" in it })
+    }
+
+    @Test
+    fun `given an escalation that contradicts the expectation when scoring then should list it among the misses`() {
+        val result = score(case(shouldEscalate = false), answer(escalated = true))
+
+        assertTrue(result.misses.any { "escalated=true" in it && "expected false" in it })
+    }
+
+    @Test
+    fun `given an unjudged escalation when scoring then should not list it among the misses`() {
+        assertTrue(score(case(shouldEscalate = null), answer(escalated = true)).misses.isEmpty())
+    }
+
+    @Test
+    fun `given missing facts and sources when scoring then should name each one among the misses`() {
+        val result = score(
+            case(mustContain = listOf("30 days", "email"), sources = listOf("Warranty")),
+            answer(text = "Soon. TCK-1001", sources = listOf("Returns Policy")),
+        )
+
+        assertTrue(result.misses.contains("missing fact: '30 days'"))
+        assertTrue(result.misses.contains("missing fact: 'email'"))
+        assertTrue(result.misses.contains("missing source: 'Warranty'"))
+    }
+
+    @Test
+    fun `given forbidden content when scoring then should name it among the misses`() {
+        val result = score(case(mustNotContain = listOf("FS104200")), answer(text = "Tracking FS104200. TCK-1001"))
+
+        assertTrue(result.misses.contains("forbidden content found: 'FS104200'"))
+    }
+
+    @Test
+    fun `given a perfect answer when scoring then should have no misses`() {
+        assertEquals(emptyList(), score(case(), answer()).misses)
+    }
+
+    @Test
+    fun `given the question and the answer when scoring then should keep them and cut a long answer`() {
+        val long = "word ".repeat(200) + "TCK-1001"
+
+        val result = score(case(), answer(text = long))
+
+        assertEquals("question", result.question)
+        assertEquals("order", result.intent)
+        assertTrue(result.answer.length <= 403 && result.answer.endsWith("..."))
+    }
+
+    @Test
     fun `given a case that failed to run when recording it then should fail every criterion and keep the error`() {
         val result = scorer.failed(case(sources = listOf("Warranty"), shouldEscalate = true), "API responded 500")
 
@@ -124,5 +178,7 @@ class CaseScorerTest {
         assertTrue(result.leakFree)
         assertEquals("API responded 500", result.error)
         assertEquals(true, result.shouldEscalate)
+        assertEquals("question", result.question)
+        assertTrue(result.misses.any { "API responded 500" in it })
     }
 }
