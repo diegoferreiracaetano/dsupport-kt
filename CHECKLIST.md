@@ -53,10 +53,10 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 - [x] `LocalToolProvider`
 
 ### E4 — RAG [M] · tag `etapa-4`
-- [ ] Section chunker, accent folding without `java.text`
-- [ ] `TfIdfEmbedder` and `VoyageEmbedder`
-- [ ] `VectorKnowledgeBase` and `SearchKbTool` with a relevance cut-off
-- [ ] Help-center articles in `data/kb/`
+- [x] Section chunker, accent folding without `java.text`
+- [x] `TfIdfEmbedder` and `VoyageEmbedder`
+- [x] `VectorKnowledgeBase` and `SearchKbTool` with a relevance cut-off
+- [x] Help-center articles in `data/kb/`
 
 ### E5 — MCP with the official SDK [D] · tag `etapa-5`
 - [ ] Guide `docs/stages/5-mcp.md` (version and transport confirmed in the documentation)

@@ -53,10 +53,10 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [x] `LocalToolProvider`
 
 ### E4 — RAG [M] · tag `etapa-4`
-- [ ] Chunker por seção, normalização de acentos sem `java.text`
-- [ ] `TfIdfEmbedder` e `VoyageEmbedder`
-- [ ] `VectorKnowledgeBase` e `SearchKbTool` com corte de relevância
-- [ ] Artigos da central de ajuda em `data/kb/`
+- [x] Chunker por seção, normalização de acentos sem `java.text`
+- [x] `TfIdfEmbedder` e `VoyageEmbedder`
+- [x] `VectorKnowledgeBase` e `SearchKbTool` com corte de relevância
+- [x] Artigos da central de ajuda em `data/kb/`
 
 ### E5 — MCP com o SDK oficial [D] · tag `etapa-5`
 - [ ] Guia `docs/stages/5-mcp.pt-BR.md` (versão e transporte confirmados na documentação)
