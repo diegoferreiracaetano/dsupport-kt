@@ -35,11 +35,11 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [x] `ScriptedLlmClient` e `LlmClientContract` no módulo `testing`
 
 ### E2 — Cliente do LLM [D] · tag `etapa-2`
-- [ ] Guia `docs/etapas/2-llm-client.md`
-- [ ] `AnthropicLlmClient` (mapeamento de ida e volta, `tool_use`/`tool_result`, saída estruturada)
-- [ ] Erros da API: 2 novas tentativas e depois erro claro
-- [ ] Passa na suíte `LlmClientContract`
-- [ ] ADR do cliente (SDK oficial ou HTTP direto)
+- [x] Guia `docs/etapas/2-llm-client.md`
+- [x] `AnthropicLlmClient` (mapeamento de ida e volta, `tool_use`/`tool_result`, saída estruturada)
+- [x] Erros da API: 2 novas tentativas e depois erro claro
+- [x] Passa na suíte `LlmClientContract`
+- [x] ADR do cliente (SDK oficial ou HTTP direto)
 
 ### E3 — Ferramentas reais [M] · tag `etapa-3`
 - [ ] Domínio `Order`/`Ticket` e portas `OrderGateway`/`TicketGateway`
