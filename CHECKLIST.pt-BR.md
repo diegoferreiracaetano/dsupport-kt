@@ -116,10 +116,10 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [ ] `server`: `POST /chat` com streaming de eventos, chave só no servidor
 - [ ] Teste do contrato HTTP
 
-### E12 — App Compose Multiplatform
+### E12 — App Compose Multiplatform (um appzinho para interações reais)
 - [ ] Alvos escolhidos (Android + Desktop primeiro; iOS e Web depois, conferindo a maturidade atual)
 - [ ] `contract` habilitado para os alvos do app
-- [ ] Chat com fontes citadas, selo de escalado e árvore do trace ao vivo
+- [ ] Chat em que uma pessoa digita perguntas reais e vê a resposta, as fontes citadas, o selo de escalado e a árvore do trace ao vivo (o mesmo fluxo de `AgentEvent` que o terminal imprime)
 - [ ] Servidor acessível pelos clientes (emulador, simulador, aparelho real)
 
 ---

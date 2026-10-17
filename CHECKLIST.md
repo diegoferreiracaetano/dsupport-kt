@@ -116,10 +116,10 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 - [ ] `server`: `POST /chat` with event streaming, key only on the server
 - [ ] HTTP contract test
 
-### E12 — Compose Multiplatform app
+### E12 — Compose Multiplatform app (a small app for real interactions)
 - [ ] Targets chosen (Android + Desktop first; iOS and Web later, checking current maturity)
 - [ ] `contract` enabled for the app's targets
-- [ ] Chat with cited sources, an escalated badge and a live trace tree
+- [ ] Chat where a person types real questions and sees the answer, cited sources, an escalated badge and the live trace tree (the same `AgentEvent` stream the terminal prints)
 - [ ] Server reachable from the clients (emulator, simulator, real device)
 
 ---
