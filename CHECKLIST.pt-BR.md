@@ -124,7 +124,8 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 
 ### E13 — Apresentação didática
 - [ ] Formato definido (deck ou página)
-- [ ] Um bloco por etapa: conceito, diagrama, código real da tag, demo, o que observar
+- [ ] Títulos das etapas com os nomes didáticos de `docs/presentation/glossary.pt-BR.md` (nome técnico entre parênteses na primeira vez)
+- [ ] Um bloco por etapa: conceito, analogia, diagrama, código real da tag, demo, o que observar
 - [ ] Arquitetura completa e números da avaliação
 - [ ] GIF ou vídeo da demo
 

@@ -124,7 +124,8 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 
 ### E13 — Teaching presentation
 - [ ] Format defined (deck or page)
-- [ ] One block per stage: concept, diagram, real code from the tag, demo, what to observe
+- [ ] Stage titles use the didactic names from `docs/presentation/glossary.md` (technical name in parentheses the first time)
+- [ ] One block per stage: concept, analogy, diagram, real code from the tag, demo, what to observe
 - [ ] Complete architecture and evaluation numbers
 - [ ] GIF or video of the demo
 

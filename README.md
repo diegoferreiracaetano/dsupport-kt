@@ -18,4 +18,4 @@ A multi-agent customer support assistant, hand-built in Kotlin Multiplatform: Cl
 
 ## Documentation
 
-Project documents exist in English (`name.md`) and Portuguese (`name.pt-BR.md`): the README, the checklist, the ADRs in `docs/adr` and the stage guides in `docs/stages`. The design spec and the implementation plan under `docs/superpowers` are working documents, kept in Portuguese only.
+Project documents exist in English (`name.md`) and Portuguese (`name.pt-BR.md`): the README, the checklist, the ADRs in `docs/adr` and the stage guides in `docs/stages`. The presentation vocabulary (technical term, didactic name and analogy) is in `docs/presentation`. The design spec and the implementation plan under `docs/superpowers` are working documents, kept in Portuguese only.

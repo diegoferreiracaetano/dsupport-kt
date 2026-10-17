@@ -18,4 +18,4 @@ Assistente de suporte ao cliente multi-agente, construído à mão em Kotlin Mul
 
 ## Documentação
 
-Os documentos do projeto existem em inglês (`nome.md`) e em português (`nome.pt-BR.md`): o README, o checklist, os ADRs em `docs/adr` e os guias de etapa em `docs/stages`. A spec de design e o plano de implementação em `docs/superpowers` são documentos de trabalho, mantidos só em português.
+Os documentos do projeto existem em inglês (`nome.md`) e em português (`nome.pt-BR.md`): o README, o checklist, os ADRs em `docs/adr` e os guias de etapa em `docs/stages`. O vocabulário da apresentação (termo técnico, nome didático e analogia) está em `docs/presentation`. A spec de design e o plano de implementação em `docs/superpowers` são documentos de trabalho, mantidos só em português.
