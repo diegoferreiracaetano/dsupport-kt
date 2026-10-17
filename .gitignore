@@ -1,0 +1,13 @@
+.gradle/
+build/
+.kotlin/
+.idea/
+*.iml
+out/
+local.properties
+.DS_Store
+
+# segredos e execuções locais
+.env
+traces/
+.superpowers/

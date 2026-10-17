@@ -1,0 +1,131 @@
+# DSupport — Checklist
+
+Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean Architecture, MCP com o SDK oficial, LLM genérico.
+
+- Spec: `docs/superpowers/specs/2026-10-17-dsupport-nucleo-design.md`
+- Plano da fase 1: `docs/superpowers/plans/2026-10-17-dsupport-nucleo.md`
+
+**Como usar:** um item por vez, na ordem. Eu explico antes, você confirma depois de testar. Cada etapa fecha com um commit e a tag `etapa-N`.
+**Autor:** **[M]** Claude faz · **[D]** Diego escreve, com guia prévio em `docs/etapas/`.
+
+---
+
+## Antes de começar
+
+- [ ] Revisar a spec e o plano (este checklist, a spec e o plano batem entre si)
+- [ ] Escolher o método de execução (nativo ou subagent-driven; recomendado: nativo)
+- [ ] `ANTHROPIC_API_KEY` disponível para as etapas 6 e 9.2 (você exporta; eu não digito chaves)
+- [ ] `VOYAGE_API_KEY` só se quiser o embedding semântico (opcional; o TF-IDF funciona sem chave)
+
+## Fase 1 — Núcleo
+
+### E0 — Esqueleto [M] · tag `etapa-0`
+- [x] Versões resolvidas: Kotlin 2.4.21, Gradle 9.8.1, coroutines 1.11.0, serialization 1.11.0, datetime 0.8.0, Ktor 3.6.0, SDK de MCP 0.15.0
+- [x] Módulos `contract`, `core`, `testing`, `adapters`, `mcp-orders`, `mcp-tickets`, `cli`, `eval`
+- [x] JDK 21 fixado no projeto (o JDK 26 do sistema não atrapalha)
+- [x] `./gradlew test` verde (agregador na raiz roda o `jvmTest` dos módulos KMP) + compilação Wasm de `contract` e `core` (validada com código descartável; passa a valer de verdade na E1)
+- [x] CI no GitHub Actions, `.gitignore`, `.env.example`, README inicial
+- [x] `git init` e primeiro commit
+
+### E1 — Vocabulário e loop do agente [M] · tag `etapa-1`
+- [ ] `AgentEvent` no `contract`
+- [ ] Portas `LlmClient`, `Tool`, `ToolProvider`, `EventSink`
+- [ ] `Agent` com loop, limite de turnos e ferramenta inexistente tratada
+- [ ] `ScriptedLlmClient` e `LlmClientContract` no módulo `testing`
+
+### E2 — Cliente do LLM [D] · tag `etapa-2`
+- [ ] Guia `docs/etapas/2-llm-client.md`
+- [ ] `AnthropicLlmClient` (mapeamento de ida e volta, `tool_use`/`tool_result`, saída estruturada)
+- [ ] Erros da API: 2 novas tentativas e depois erro claro
+- [ ] Passa na suíte `LlmClientContract`
+- [ ] ADR do cliente (SDK oficial ou HTTP direto)
+
+### E3 — Ferramentas reais [M] · tag `etapa-3`
+- [ ] Domínio `Order`/`Ticket` e portas `OrderGateway`/`TicketGateway`
+- [ ] `get_order_status` (com atraso calculado), `track_shipment`, `create_ticket`
+- [ ] Repositórios JSON em `jvmMain`; dados sem marca
+- [ ] `LocalToolProvider`
+
+### E4 — RAG [M] · tag `etapa-4`
+- [ ] Chunker por seção, normalização de acentos sem `java.text`
+- [ ] `TfIdfEmbedder` e `VoyageEmbedder`
+- [ ] `VectorKnowledgeBase` e `SearchKbTool` com corte de relevância
+- [ ] Artigos da central de ajuda em `data/kb/`
+
+### E5 — MCP com o SDK oficial [D] · tag `etapa-5`
+- [ ] Guia `docs/etapas/5-mcp.md` (versão e transporte confirmados na documentação)
+- [ ] Servidores `mcp-orders` e `mcp-tickets`
+- [ ] `McpToolProvider` lendo `config/mcp-servers.json`, com tempo limite por chamada
+- [ ] Servidor que cai ou não sobe devolve erro sem derrubar o agente
+- [ ] Prova do critério: adicionar o servidor de tickets só editando a configuração
+
+### E6 — Multi-agentes e paralelismo [D] · tag `etapa-6`
+- [ ] Guia `docs/etapas/6-multiagentes.md`
+- [ ] `subAgentTool`, `ToolCatalog`, `config/agents.json` (lista de permissão por agente)
+- [ ] Turnos com várias chamadas rodam em paralelo, com ordem preservada
+- [ ] Prompts neutros; orquestrador sem ferramenta de dados
+- [ ] Primeira execução de ponta a ponta com a API (`:cli:run`)
+
+### E7 — Guardas [M] · tag `etapa-7`
+- [ ] `IdentityGate`, `Redaction`, `RedactResults` (agora ligada), `TicketDedup`, `MentionTicket`
+- [ ] Padrões de CPF, cartão e e-mail num lugar só
+- [ ] `GuardPolicy`: ferramenta destrutiva sem guarda é rejeitada na montagem
+- [ ] Dois `create_ticket` paralelos geram um ticket só
+
+### E8.1 — Saída tipada [M] · tag `etapa-8.1`
+- [ ] `SupportAnswer` completo no `contract`
+- [ ] Validação em código (ticket inventado, confiança, fontes, intenção)
+- [ ] Esquema `responder_cliente`
+
+### E8.2 — Revisor e caso de uso [M] · tag `etapa-8.2`
+- [ ] `ReviewLoop` com no máximo 2 revisões e escalação por código
+- [ ] `AnswerCustomer` devolvendo `Flow<AgentEvent>`, um por pergunta
+
+### E9.1 — Eventos, trace e custo [D] · tag `etapa-9.1`
+- [ ] Guia `docs/etapas/9-1-trace.md`
+- [ ] `TraceReport` (árvore, custo por agente, mais lentos) e arquivo JSON de trace
+- [ ] Sem estado global
+
+### E9.2 — Avaliação [M + D] · tag `etapa-9.2`
+- [ ] Golden dataset de 15 casos, neutralizado
+- [ ] Pontuação e relatório com as 6 métricas (roteamento, groundedness, fatos, fontes, precisão e recall de escalação) + latência e tokens
+- [ ] `EvalRunner` continua depois de um caso com erro
+- [ ] Relatório real em `reports/` (precisa da chave)
+
+### E10 — Fechamento da fase 1 [M] · tag `fase-1`
+- [ ] README com diagrama, como rodar, métricas e um trecho de trace
+- [ ] ADRs 0001 a 0003
+- [ ] Critérios de sucesso da spec conferidos e todas as tags existem
+
+---
+
+## Fase 2 — Interface (spec e plano próprios, depois da fase 1)
+
+### E11 — Servidor Ktor
+- [ ] Spec e plano da fase 2
+- [ ] `server`: `POST /chat` com streaming de eventos, chave só no servidor
+- [ ] Teste do contrato HTTP
+
+### E12 — App Compose Multiplatform
+- [ ] Alvos escolhidos (Android + Desktop primeiro; iOS e Web depois, conferindo a maturidade atual)
+- [ ] `contract` habilitado para os alvos do app
+- [ ] Chat com fontes citadas, selo de escalado e árvore do trace ao vivo
+- [ ] Servidor acessível pelos clientes (emulador, simulador, aparelho real)
+
+---
+
+## Entrega final
+
+### E13 — Apresentação didática
+- [ ] Formato definido (deck ou página)
+- [ ] Um bloco por etapa: conceito, diagrama, código real da tag, demo, o que observar
+- [ ] Arquitetura completa e números da avaliação
+- [ ] GIF ou vídeo da demo
+
+### E14 — Artigo para publicar (último item)
+- [ ] Plataforma e público escolhidos
+- [ ] Roteiro: problema, arquitetura, o que foi construído etapa a etapa, números da avaliação, lições aprendidas
+- [ ] Rascunho com trechos reais de código tirados das tags
+- [ ] Imagens: diagrama da arquitetura, GIF da demo, tabela de métricas
+- [ ] Revisão sua e ajustes
+- [ ] Publicação (só com a sua confirmação) e link no README
