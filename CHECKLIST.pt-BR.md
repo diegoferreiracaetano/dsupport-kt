@@ -92,9 +92,9 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [ ] `TraceReport` (árvore, custo por agente, mais lentos) e arquivo JSON de trace
 - [ ] Sem estado global
 
-### E9.2 — Avaliação [M + D] · tag `etapa-9.2`
-- [ ] Golden dataset de 15 casos, neutralizado
-- [ ] Pontuação e relatório com as 6 métricas (roteamento, groundedness, fatos, fontes, precisão e recall de escalação) + latência e tokens
+### E9.2 — Evals [M + D] · tag `etapa-9.2`
+- [x] Golden dataset de 15 casos, neutralizado (com verificação de vazamento, `must_not_contain`)
+- [x] Pontuação e relatório com as 6 métricas (roteamento, groundedness, fatos, fontes, precisão e recall de escalação) + uma métrica de vazamento, latência e tokens
 - [ ] `EvalRunner` continua depois de um caso com erro
 - [ ] Relatório real em `reports/` (precisa da chave)
 

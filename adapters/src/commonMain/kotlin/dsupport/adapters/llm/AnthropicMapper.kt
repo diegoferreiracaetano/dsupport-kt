@@ -4,6 +4,7 @@ import dsupport.core.llm.LlmReply
 import dsupport.core.llm.LlmRequest
 import dsupport.core.llm.Message
 import dsupport.core.llm.OutputSchema
+import dsupport.core.llm.StructuredReply
 import dsupport.core.llm.ToolCall
 import dsupport.core.llm.Usage
 import dsupport.core.tool.ToolSpec
@@ -63,12 +64,12 @@ class AnthropicMapper {
         return LlmReply.Text(joinedText(blocks), usage)
     }
 
-    fun parseStructured(body: JsonObject): JsonObject {
+    fun parseStructured(body: JsonObject): StructuredReply {
         val blocks = contentBlocks(body)
         if (stopReason(body) == "max_tokens") throw LlmApiException(null, "structured output was cut off by max_tokens")
         val text = joinedText(blocks)
         return try {
-            Json.parseToJsonElement(text).jsonObject
+            StructuredReply(Json.parseToJsonElement(text).jsonObject, usageOf(body))
         } catch (e: SerializationException) {
             throw LlmApiException(null, "structured output is not valid JSON: ${e.message}")
         } catch (e: IllegalArgumentException) {

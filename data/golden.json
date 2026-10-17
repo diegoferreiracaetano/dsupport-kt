@@ -1,0 +1,193 @@
+[
+  {
+    "id": "g01",
+    "question": "How many days do I have to return an item?",
+    "expected_intents": [
+      "return",
+      "policy"
+    ],
+    "should_escalate": false,
+    "must_contain": [
+      "30 days"
+    ],
+    "expected_sources": [
+      "Returns Policy"
+    ]
+  },
+  {
+    "id": "g02",
+    "question": "How long does a refund take to arrive?",
+    "expected_intents": [
+      "policy",
+      "return"
+    ],
+    "should_escalate": false,
+    "must_contain": [
+      "business days"
+    ],
+    "expected_sources": [
+      "Refunds"
+    ]
+  },
+  {
+    "id": "g03",
+    "question": "Is shipping free?",
+    "expected_intents": [
+      "policy"
+    ],
+    "should_escalate": false,
+    "must_contain": [
+      "$50"
+    ],
+    "expected_sources": [
+      "Shipping"
+    ]
+  },
+  {
+    "id": "g04",
+    "question": "Where do I find my tracking code?",
+    "expected_intents": [
+      "policy",
+      "order"
+    ],
+    "should_escalate": false,
+    "must_contain": [],
+    "expected_sources": [
+      "Order Tracking"
+    ]
+  },
+  {
+    "id": "g05",
+    "question": "Which payment methods do you accept?",
+    "expected_intents": [
+      "policy"
+    ],
+    "should_escalate": false,
+    "must_contain": [
+      "PayPal"
+    ],
+    "expected_sources": [
+      "Payments"
+    ]
+  },
+  {
+    "id": "g06",
+    "question": "Does the warranty cover accidental damage?",
+    "expected_intents": [
+      "policy"
+    ],
+    "should_escalate": false,
+    "must_contain": [],
+    "expected_sources": [
+      "Warranty"
+    ]
+  },
+  {
+    "id": "g07",
+    "question": "My order 1042 has not arrived. My email is ana@example.com",
+    "expected_intents": [
+      "order",
+      "complaint"
+    ],
+    "should_escalate": true,
+    "must_contain": [],
+    "expected_sources": []
+  },
+  {
+    "id": "g08",
+    "question": "Is order 1046 late? My email is fernanda@example.com",
+    "expected_intents": [
+      "order",
+      "complaint"
+    ],
+    "should_escalate": true,
+    "must_contain": [],
+    "expected_sources": []
+  },
+  {
+    "id": "g09",
+    "question": "Where is my order 1044? My email is diego@example.com",
+    "expected_intents": [
+      "order"
+    ],
+    "should_escalate": false,
+    "must_contain": [],
+    "expected_sources": []
+  },
+  {
+    "id": "g10",
+    "question": "Has order 1001 arrived? My email is ana@example.com",
+    "expected_intents": [
+      "order"
+    ],
+    "should_escalate": false,
+    "must_contain": [
+      "delivered"
+    ],
+    "expected_sources": []
+  },
+  {
+    "id": "g11",
+    "question": "Show me the details of order 1042. My email is bruno@example.com",
+    "expected_intents": [
+      "order",
+      "other"
+    ],
+    "should_escalate": null,
+    "must_contain": [],
+    "expected_sources": [],
+    "must_not_contain": [
+      "FastShip",
+      "FS104200",
+      "Headphones"
+    ]
+  },
+  {
+    "id": "g12",
+    "question": "Where is my order 1042?",
+    "expected_intents": [
+      "order"
+    ],
+    "should_escalate": false,
+    "must_contain": [
+      "email"
+    ],
+    "expected_sources": []
+  },
+  {
+    "id": "g13",
+    "question": "Can I still cancel order 1045? My email is elisa@example.com",
+    "expected_intents": [
+      "policy",
+      "order"
+    ],
+    "should_escalate": false,
+    "must_contain": [
+      "cancel"
+    ],
+    "expected_sources": [
+      "Order Cancellation"
+    ]
+  },
+  {
+    "id": "g14",
+    "question": "Do you sell airline tickets?",
+    "expected_intents": [
+      "other"
+    ],
+    "should_escalate": true,
+    "must_contain": [],
+    "expected_sources": []
+  },
+  {
+    "id": "g15",
+    "question": "This is the third time my package is late and nobody helps me! Order 1049, bruno@example.com",
+    "expected_intents": [
+      "complaint",
+      "order"
+    ],
+    "should_escalate": true,
+    "must_contain": [],
+    "expected_sources": []
+  }
+]

@@ -92,9 +92,9 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 - [ ] `TraceReport` (tree, cost per agent, slowest) and a JSON trace file
 - [ ] No global state
 
-### E9.2 — Evaluation [M + D] · tag `etapa-9.2`
-- [ ] Golden dataset of 15 cases, brand-free
-- [ ] Scoring and a report with the 6 metrics (routing, groundedness, facts, sources, escalation precision and recall) + latency and tokens
+### E9.2 — Evals [M + D] · tag `etapa-9.2`
+- [x] Golden dataset of 15 cases, brand-free (with a leak check, `must_not_contain`)
+- [x] Scoring and a report with the 6 metrics (routing, groundedness, facts, sources, escalation precision and recall) + a leak metric, latency and tokens
 - [ ] `EvalRunner` keeps going after a case fails
 - [ ] Real report in `reports/` (needs the key)
 

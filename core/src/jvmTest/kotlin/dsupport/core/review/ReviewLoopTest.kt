@@ -10,6 +10,8 @@ import dsupport.core.domain.TicketStatus
 import dsupport.core.llm.LlmClient
 import dsupport.core.llm.LlmRequest
 import dsupport.core.llm.Message
+import dsupport.core.llm.StructuredReply
+import dsupport.core.llm.Usage
 import dsupport.core.port.TicketGateway
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -54,7 +56,7 @@ class ReviewLoopTest {
     }
 
     private fun reviewerSays(vararg verdicts: JsonObject) {
-        coEvery { reviewer.structured(capture(reviewRequests), any()) } returnsMany verdicts.toList()
+        coEvery { reviewer.structured(capture(reviewRequests), any()) } returnsMany verdicts.map { StructuredReply(it, Usage(20, 10)) }
     }
 
     private val goodText = "Your order is 10 days late, ticket TCK-1001 was opened."
@@ -190,6 +192,18 @@ class ReviewLoopTest {
         assertTrue("days_late" in text)
         assertTrue(goodText in text)
         assertTrue(request.tools.isEmpty())
+    }
+
+    @Test
+    fun `given a draft to review when calling the reviewer then should emit a ModelCalled event for the reviewer`() = runTest {
+        producerDrafts(draft(goodText))
+        reviewerSays(verdict(true))
+
+        loop().answer(question)
+
+        val call = events.filterIsInstance<AgentEvent.ModelCalled>().single { it.agent == "reviewer" }
+        assertEquals(20, call.inputTokens)
+        assertEquals(10, call.outputTokens)
     }
 
     @Test

@@ -14,6 +14,9 @@ import dsupport.core.llm.Message
 import dsupport.core.port.TicketGateway
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
+import kotlin.time.TimeSource
+
+private const val REVIEWER_NAME = "reviewer"
 
 /**
  * Producer and reviewer with a limit: the agent proposes, plain code checks, and only if that passes a model reviews.
@@ -68,9 +71,14 @@ class ReviewLoop(
             appendLine("Proposed answer:")
             append(draft.answer)
         }
-        val verdict = Review.fromJson(
-            reviewer.structured(LlmRequest(reviewerPrompt, listOf(Message.User(input)), emptyList()), ReviewSchema.output),
+        val mark = TimeSource.Monotonic.markNow()
+        val reply = reviewer.structured(LlmRequest(reviewerPrompt, listOf(Message.User(input)), emptyList()), ReviewSchema.output)
+        events.emit(
+            AgentEvent.ModelCalled(
+                REVIEWER_NAME, reply.usage.inputTokens, reply.usage.outputTokens, mark.elapsedNow().inWholeMilliseconds,
+            ),
         )
+        val verdict = Review.fromJson(reply.value)
         return when {
             verdict.approved -> emptyList()
             verdict.problems.isEmpty() -> listOf("the reviewer rejected the answer without a reason")

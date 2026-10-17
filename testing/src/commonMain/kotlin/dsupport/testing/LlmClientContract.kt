@@ -46,6 +46,6 @@ abstract class LlmClientContract {
     fun `given a provider that answers with a JSON object when asking for a structured reply then should return that object`() = runTest {
         val expected: JsonObject = buildJsonObject { put("answer", "ok") }
 
-        assertEquals(expected, clientFor(Scenario.Structured(expected)).structured(request, schema))
+        assertEquals(expected, clientFor(Scenario.Structured(expected)).structured(request, schema).value)
     }
 }

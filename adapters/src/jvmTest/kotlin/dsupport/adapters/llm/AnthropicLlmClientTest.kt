@@ -4,6 +4,7 @@ import dsupport.core.llm.LlmReply
 import dsupport.core.llm.LlmRequest
 import dsupport.core.llm.Message
 import dsupport.core.llm.OutputSchema
+import dsupport.core.llm.StructuredReply
 import dsupport.core.llm.Usage
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -70,12 +71,12 @@ class AnthropicLlmClientTest {
     fun `given an output schema when asking for a structured reply then should build the request with it and parse the result`() = runTest {
         val schema = OutputSchema("answer", "The final answer.", buildJsonObject { put("type", "object") })
         val parsed: JsonObject = buildJsonObject { put("answer", "ok") }
-        every { mapper.parseStructured(any()) } returns parsed
+        every { mapper.parseStructured(any()) } returns StructuredReply(parsed, Usage(3, 1))
         every { mapper.buildRequest(any(), any(), any(), schema) } returns builtBody
 
         val result = client { json(HttpStatusCode.OK, okBody) }.structured(request, schema)
 
-        assertEquals(parsed, result)
+        assertEquals(StructuredReply(parsed, Usage(3, 1)), result)
         verify { mapper.buildRequest("claude-haiku-5-5", 4096, request, schema) }
     }
 

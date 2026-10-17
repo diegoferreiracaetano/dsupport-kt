@@ -50,7 +50,14 @@ class Agent(
 
     suspend fun finish(schema: OutputSchema): JsonObject {
         val closing = Message.User("Now return your final answer in the ${schema.name} format.")
-        return llm.structured(LlmRequest(system, history + closing, specs), schema)
+        val mark = TimeSource.Monotonic.markNow()
+        val reply = llm.structured(LlmRequest(system, history + closing, specs), schema)
+        events.emit(
+            AgentEvent.ModelCalled(
+                name, reply.usage.inputTokens, reply.usage.outputTokens, mark.elapsedNow().inWholeMilliseconds,
+            ),
+        )
+        return reply.value
     }
 
     private suspend fun loop(): String {

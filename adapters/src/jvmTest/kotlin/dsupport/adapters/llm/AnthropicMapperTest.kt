@@ -5,6 +5,7 @@ import dsupport.core.llm.LlmRequest
 import dsupport.core.llm.Message
 import dsupport.core.llm.OutputSchema
 import dsupport.core.llm.ToolCall
+import dsupport.core.llm.Usage
 import dsupport.core.tool.ToolSpec
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -190,10 +191,11 @@ class AnthropicMapperTest {
     @Test
     fun `given a JSON text when parsing a structured reply then should return the object`() {
         val result = mapper.parseStructured(
-            parse("""{"content":[{"type":"text","text":"{\"answer\":\"ok\"}"}],"stop_reason":"end_turn"}"""),
+            parse("""{"content":[{"type":"text","text":"{\"answer\":\"ok\"}"}],"stop_reason":"end_turn","usage":{"input_tokens":7,"output_tokens":3}}"""),
         )
 
-        assertEquals("ok", result.getValue("answer").jsonPrimitive.content)
+        assertEquals("ok", result.value.getValue("answer").jsonPrimitive.content)
+        assertEquals(Usage(7, 3), result.usage)
     }
 
     @Test

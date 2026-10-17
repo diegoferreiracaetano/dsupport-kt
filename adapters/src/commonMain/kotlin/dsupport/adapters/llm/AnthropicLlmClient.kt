@@ -4,6 +4,7 @@ import dsupport.core.llm.LlmClient
 import dsupport.core.llm.LlmReply
 import dsupport.core.llm.LlmRequest
 import dsupport.core.llm.OutputSchema
+import dsupport.core.llm.StructuredReply
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -38,7 +39,7 @@ class AnthropicLlmClient(
     override suspend fun next(request: LlmRequest): LlmReply =
         mapper.parseReply(send(mapper.buildRequest(modelId, maxTokens, request)))
 
-    override suspend fun structured(request: LlmRequest, schema: OutputSchema): JsonObject =
+    override suspend fun structured(request: LlmRequest, schema: OutputSchema): StructuredReply =
         mapper.parseStructured(send(mapper.buildRequest(modelId, maxTokens, request, schema)))
 
     private suspend fun send(body: JsonObject): JsonObject {

@@ -14,11 +14,14 @@ sealed interface LlmReply {
     data class ToolCalls(val calls: List<ToolCall>, override val usage: Usage) : LlmReply
 }
 
+/** A structured answer plus what it cost, so the cost of structured calls is as visible as any other call. */
+data class StructuredReply(val value: JsonObject, val usage: Usage)
+
 /** A mandatory output format: name, description and the JSON Schema the answer must follow. */
 data class OutputSchema(val name: String, val description: String, val schema: JsonObject)
 
 /** The only thing the core knows about a language model. Each provider is an adapter. */
 interface LlmClient {
     suspend fun next(request: LlmRequest): LlmReply
-    suspend fun structured(request: LlmRequest, schema: OutputSchema): JsonObject
+    suspend fun structured(request: LlmRequest, schema: OutputSchema): StructuredReply
 }

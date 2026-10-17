@@ -9,6 +9,7 @@ import dsupport.core.llm.LlmReply
 import dsupport.core.llm.LlmRequest
 import dsupport.core.llm.Message
 import dsupport.core.llm.OutputSchema
+import dsupport.core.llm.StructuredReply
 import dsupport.core.llm.ToolCall
 import dsupport.core.llm.Usage
 import dsupport.core.tool.Tool
@@ -154,13 +155,16 @@ class AgentTest {
         val structured = mutableListOf<LlmRequest>()
         val expected = buildJsonObject { put("answer", "ok") }
         repliesAre(LlmReply.Text("done", usage))
-        coEvery { llm.structured(capture(structured), schema) } returns expected
+        coEvery { llm.structured(capture(structured), schema) } returns StructuredReply(expected, Usage(40, 8))
         val agent = agent()
         agent.run("question")
 
         val result = agent.finish(schema)
 
         assertEquals(expected, result)
+        val finishCall = events.filterIsInstance<AgentEvent.ModelCalled>().last()
+        assertEquals(40, finishCall.inputTokens)
+        assertEquals(8, finishCall.outputTokens)
         val messages = structured.single().messages
         assertEquals(Message.User("question"), messages.first())
         assertTrue("answer_format" in (messages.last() as Message.User).text)
