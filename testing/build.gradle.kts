@@ -15,6 +15,9 @@ kotlin {
         commonMain.dependencies {
             api(project(":core"))
             api(kotlin("test"))
+            api(libs.kotlinx.coroutines.test)
         }
+        // No `main` da JVM, `kotlin.test.Test` só existe com o artefato do JUnit explícito.
+        jvmMain.dependencies { api(kotlin("test-junit5")) }
     }
 }

@@ -15,3 +15,8 @@ tasks.register("test") {
         }
     })
 }
+
+// Todos os módulos rodam os testes no JUnit Platform (JUnit 5).
+subprojects {
+    tasks.withType<Test>().configureEach { useJUnitPlatform() }
+}

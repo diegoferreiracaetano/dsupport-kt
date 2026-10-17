@@ -28,10 +28,10 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [x] `git init` e primeiro commit
 
 ### E1 — Vocabulário e loop do agente [M] · tag `etapa-1`
-- [ ] `AgentEvent` no `contract`
-- [ ] Portas `LlmClient`, `Tool`, `ToolProvider`, `EventSink`
-- [ ] `Agent` com loop, limite de turnos e ferramenta inexistente tratada
-- [ ] `ScriptedLlmClient` e `LlmClientContract` no módulo `testing`
+- [x] `AgentEvent` no `contract`
+- [x] Portas `LlmClient`, `Tool`, `ToolProvider`, `EventSink`
+- [x] `Agent` com loop, limite de turnos e ferramenta inexistente tratada
+- [x] `ScriptedLlmClient` e `LlmClientContract` no módulo `testing`
 
 ### E2 — Cliente do LLM [D] · tag `etapa-2`
 - [ ] Guia `docs/etapas/2-llm-client.md`
