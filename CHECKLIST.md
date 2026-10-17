@@ -65,14 +65,14 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 - [ ] A server that crashes or fails to start returns an error without taking the agent down
 - [ ] Proof of the criterion: add the tickets server by editing the configuration only
 
-### E6 — Multi-agent and parallelism [D] · tag `etapa-6`
+### E6 — Multi-agent and parallelism [D, done by Claude at Diego's request] · tag `etapa-6`
 - [x] Guide `docs/stages/6-multi-agents.md`
-- [ ] `subAgentTool` (a fresh agent per call), `ToolCatalog`, `config/agents.json` (per-agent allow-list)
-- [ ] Turns with several calls run in parallel, order preserved, failures isolated
-- [ ] Neutral prompts in English; orchestrator without data tools
-- [ ] `DSupportAssembly`: guards in order (`TicketDedup` last) and `GuardPolicy` at assembly
-- [ ] Two parallel `create_ticket` calls produce one ticket (end to end)
-- [ ] `REFERENCE_DATE` supported, also in `mcp-orders`
+- [x] `subAgentTool` (a fresh agent per call), `ToolCatalog`, `config/agents.json` (per-agent allow-list)
+- [x] Turns with several calls run in parallel, order preserved, failures isolated
+- [x] Neutral prompts in English; orchestrator without data tools
+- [x] `DSupportAssembly`: guards in order (`TicketDedup` last) and `GuardPolicy` at assembly
+- [x] Two parallel `create_ticket` calls produce one ticket (end to end, including real parallelism)
+- [ ] `REFERENCE_DATE` supported (done in the `cli`; still to do in `mcp-orders`, in E5)
 - [ ] First end-to-end run against the API (`:cli:run`)
 
 ### E7 — Guards [M] · tag `etapa-7`

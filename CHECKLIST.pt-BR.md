@@ -65,14 +65,14 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [ ] Servidor que cai ou não sobe devolve erro sem derrubar o agente
 - [ ] Prova do critério: adicionar o servidor de tickets só editando a configuração
 
-### E6 — Multi-agentes e paralelismo [D] · tag `etapa-6`
+### E6 — Multi-agentes e paralelismo [D, feita pela Claude a pedido do Diego] · tag `etapa-6`
 - [x] Guia `docs/stages/6-multi-agents.pt-BR.md`
-- [ ] `subAgentTool` (um agente novo por chamada), `ToolCatalog`, `config/agents.json` (lista de permissão por agente)
-- [ ] Turnos com várias chamadas rodam em paralelo, com ordem preservada e falhas isoladas
-- [ ] Prompts neutros em inglês; orquestrador sem ferramenta de dados
-- [ ] `DSupportAssembly`: guardas na ordem (`TicketDedup` por último) e `GuardPolicy` na montagem
-- [ ] Dois `create_ticket` paralelos geram um ticket só (de ponta a ponta)
-- [ ] `REFERENCE_DATE` suportada, inclusive no `mcp-orders`
+- [x] `subAgentTool` (um agente novo por chamada), `ToolCatalog`, `config/agents.json` (lista de permissão por agente)
+- [x] Turnos com várias chamadas rodam em paralelo, com ordem preservada e falhas isoladas
+- [x] Prompts neutros em inglês; orquestrador sem ferramenta de dados
+- [x] `DSupportAssembly`: guardas na ordem (`TicketDedup` por último) e `GuardPolicy` na montagem
+- [x] Dois `create_ticket` paralelos geram um ticket só (de ponta a ponta, inclusive com paralelismo real)
+- [ ] `REFERENCE_DATE` suportada (feito no `cli`; falta no `mcp-orders`, na E5)
 - [ ] Primeira execução de ponta a ponta com a API (`:cli:run`)
 
 ### E7 — Guardas [M] · tag `etapa-7`

@@ -19,6 +19,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -27,6 +30,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AgentTest {
     private val usage = Usage(inputTokens = 10, outputTokens = 5)
     private val emptySchema = buildJsonObject { put("type", "object") }
@@ -238,5 +242,83 @@ class AgentTest {
         agent(hooks = listOf(first, second)).run("echo this")
 
         coVerify(exactly = 0) { second.beforeTool(any(), any(), any()) }
+    }
+
+    private fun namedTool(toolName: String, delayMs: Long, content: String) = mockk<Tool>().also {
+        every { it.spec } returns ToolSpec(toolName, "Tool $toolName.", emptySchema)
+        coEvery { it.run(any()) } coAnswers {
+            delay(delayMs)
+            ToolResult(content)
+        }
+    }
+
+    @Test
+    fun `given two tool calls in one turn when running then should run them in parallel`() = runTest {
+        coEvery { echo.run(any()) } coAnswers {
+            delay(1000)
+            ToolResult("echo: hi")
+        }
+        repliesAre(toolCalls(call("t1", "echo"), call("t2", "echo")), LlmReply.Text("done", usage))
+
+        agent().run("echo twice")
+
+        assertEquals(1000, currentTime)
+    }
+
+    @Test
+    fun `given two tool calls where the second finishes first when running then should send the results back in the order of the calls`() = runTest {
+        val slow = namedTool("slow", 2000, "slow result")
+        val fast = namedTool("fast", 1000, "fast result")
+        repliesAre(toolCalls(call("t1", "slow"), call("t2", "fast")), LlmReply.Text("done", usage))
+
+        agent(tools = listOf(slow, fast)).run("both")
+
+        val results = requests[1].messages.filterIsInstance<Message.ToolResult>()
+        assertEquals(listOf("t1", "t2"), results.map { it.callId })
+        assertEquals(listOf("slow result", "fast result"), results.map { it.content })
+        assertEquals(2000, currentTime)
+    }
+
+    @Test
+    fun `given two tool calls where one throws when running then should still run the other and report the failure as an error result`() = runTest {
+        val broken = mockk<Tool>().also {
+            every { it.spec } returns ToolSpec("broken", "Always fails.", emptySchema)
+            coEvery { it.run(any()) } throws IllegalStateException("tool exploded")
+        }
+        val fine = namedTool("fine", 500, "fine result")
+        repliesAre(toolCalls(call("t1", "broken"), call("t2", "fine")), LlmReply.Text("done", usage))
+
+        agent(tools = listOf(broken, fine)).run("both")
+
+        val results = requests[1].messages.filterIsInstance<Message.ToolResult>()
+        assertTrue(results[0].isError && "tool exploded" in results[0].content)
+        assertEquals("fine result", results[1].content)
+    }
+
+    @Test
+    fun `given a hook that throws for one call when running then should turn it into an error result for that call only`() = runTest {
+        val broken = namedTool("broken", 0, "never used")
+        val fine = namedTool("fine", 0, "fine result")
+        val exploding = hook("Exploding").also {
+            coEvery { it.beforeTool(any(), match { spec -> spec.name == "broken" }, any()) } throws IllegalStateException("guard exploded")
+        }
+        repliesAre(toolCalls(call("t1", "broken"), call("t2", "fine")), LlmReply.Text("done", usage))
+
+        agent(tools = listOf(broken, fine), hooks = listOf(exploding)).run("both")
+
+        val results = requests[1].messages.filterIsInstance<Message.ToolResult>()
+        assertTrue(results[0].isError && "guard exploded" in results[0].content)
+        assertEquals("fine result", results[1].content)
+    }
+
+    @Test
+    fun `given several tool calls when running then should consult the hooks once per call`() = runTest {
+        val counter = hook("Counter")
+        repliesAre(toolCalls(call("t1", "echo"), call("t2", "echo"), call("t3", "echo")), LlmReply.Text("done", usage))
+
+        agent(hooks = listOf(counter)).run("echo thrice")
+
+        coVerify(exactly = 3) { counter.beforeTool(any(), any(), any()) }
+        coVerify(exactly = 3) { counter.afterTool(any(), any(), any(), any()) }
     }
 }

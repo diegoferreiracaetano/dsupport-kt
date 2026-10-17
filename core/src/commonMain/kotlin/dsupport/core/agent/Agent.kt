@@ -12,6 +12,9 @@ import dsupport.core.llm.OutputSchema
 import dsupport.core.tool.Tool
 import dsupport.core.tool.ToolResult
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.JsonObject
 import kotlin.time.TimeSource
 
@@ -77,8 +80,10 @@ class Agent(
                 }
                 is LlmReply.ToolCalls -> {
                     history += Message.AssistantToolCalls(reply.calls)
-                    for (call in reply.calls) {
-                        val result = execute(call.tool, call.args)
+                    val results = coroutineScope {
+                        reply.calls.map { call -> async { execute(call.tool, call.args) } }.awaitAll()
+                    }
+                    reply.calls.zip(results).forEach { (call, result) ->
                         history += Message.ToolResult(call.id, call.tool, result.content, result.isError)
                     }
                 }
@@ -102,7 +107,13 @@ class Agent(
         val result = if (tool == null) {
             ToolResult("error: tool '$toolName' does not exist", isError = true)
         } else {
-            guarded(tool, args)
+            try {
+                guarded(tool, args)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                ToolResult("error running '$toolName': ${e.message}", isError = true)
+            }
         }
         events.emit(
             AgentEvent.ToolFinished(name, toolName, result.content, result.isError, mark.elapsedNow().inWholeMilliseconds),

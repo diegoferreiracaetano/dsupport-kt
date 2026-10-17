@@ -1,0 +1,7 @@
+{
+  "agents": {
+    "knowledge": { "tools": ["search_kb"] },
+    "orders": { "tools": ["get_order_status", "track_shipment"] },
+    "escalation": { "tools": ["create_ticket"] }
+  }
+}
