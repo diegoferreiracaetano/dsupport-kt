@@ -25,7 +25,7 @@ import dsupport.core.tool.Tool
 import dsupport.core.tool.ToolProvider
 import dsupport.core.usecase.AnswerCustomer
 
-private const val ORCHESTRATOR = "orchestrator"
+const val ORCHESTRATOR_NAME = "orchestrator"
 private const val ORCHESTRATOR_MAX_TURNS = 8
 
 private class Specialist(val name: String, val prompt: String, val description: String)
@@ -61,7 +61,7 @@ class DSupportAssembly(
 ) {
 
     suspend fun answerCustomer(): AnswerCustomer {
-        check(agents.agents[ORCHESTRATOR]?.tools.isNullOrEmpty()) { "the orchestrator must not have data tools" }
+        check(agents.agents[ORCHESTRATOR_NAME]?.tools.isNullOrEmpty()) { "the orchestrator must not have data tools" }
         val catalog = ToolCatalog(toolProviders)
         val toolsOf = SPECIALISTS.associate { it.name to catalog.select(definitionOf(it.name).tools) }
         GuardPolicy().validate(toolsOf.values.flatten(), newGuards())
@@ -91,7 +91,7 @@ class DSupportAssembly(
             }
         }
         val orchestrator = Agent(
-            name = ORCHESTRATOR,
+            name = ORCHESTRATOR_NAME,
             llm = llm,
             system = ORCHESTRATOR_PROMPT,
             tools = specialists,

@@ -17,4 +17,5 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(project(":testing"))
     testImplementation(libs.mockk)
+    testImplementation(libs.ktor.client.mock)
 }

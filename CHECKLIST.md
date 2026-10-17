@@ -99,8 +99,8 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 ### E9.2 — Evals [M + D] · tag `etapa-9.2`
 - [x] Golden dataset of 15 cases, brand-free (with a leak check, `must_not_contain`)
 - [x] Scoring and a report with the 6 metrics (routing, groundedness, facts, sources, escalation precision and recall) + a leak metric, latency and tokens
-- [ ] `EvalRunner` keeps going after a case fails
-- [ ] Real report in `reports/` (needs the key)
+- [x] `EvalRunner` keeps going after a case fails (each case with its own empty tickets file and a pinned reference date)
+- [ ] Real report in `reports/` (needs the key: `./gradlew :eval:run`)
 
 ### E10 — Phase 1 wrap-up [M] · tag `fase-1`
 - [ ] README with a diagram, how to run, metrics and a trace excerpt
