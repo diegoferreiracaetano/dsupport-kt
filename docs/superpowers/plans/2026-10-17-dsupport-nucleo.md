@@ -153,20 +153,23 @@
 ### Task 6: Multi-agentes e paralelismo (etapa 6) [D]
 
 **Files:**
-- Create: `docs/stages/6-multi-agents.md` (guia, Claude), `core/.../agent/{SubAgentTool,Prompts,AgentsConfig,ToolCatalog}.kt`, `config/agents.json`, `cli/src/main/kotlin/dsupport/cli/{Main,Assembly}.kt`
-- Modify: `core/.../agent/Agent.kt` (executa em paralelo os pedidos de ferramenta de um mesmo turno)
-- Test: `core/src/commonTest/.../agent/{ParallelToolsTest,SubAgentToolTest,ToolCatalogTest}.kt`
+- Create: `docs/stages/6-multi-agents.md` e `.pt-BR.md` (guia, Claude)
+- Create: `core/.../agent/{SubAgentTool,Prompts,AgentsConfig,ToolCatalog}.kt`, `config/agents.json`
+- Create: `cli/src/main/kotlin/dsupport/cli/{DSupportAssembly,Main}.kt` (substituem o provisório)
+- Modify: `core/.../agent/Agent.kt` (executa em paralelo as chamadas de um turno, sempre via `guarded`)
+- Modify: `mcp-orders/.../Main.kt` (lê `REFERENCE_DATE`)
+- Test: `core/src/jvmTest/.../agent/{AgentTest,SubAgentToolTest,ToolCatalogTest}.kt`, `core/.../config/AgentsConfigTest.kt`, `cli/src/test/.../{DSupportAssemblyTest,EscalationAgentTest}.kt`
 
 **Interfaces:**
-- Consumes: `Agent`, `Tool`, `ToolProvider`, `LocalToolProvider`, `McpToolProvider`.
-- Produces: `fun subAgentTool(name: String, description: String, agent: Agent): Tool` (entrada `{ "task": string }`); `@Serializable data class AgentDef(tools: List<String>, maxTurns: Int = 4)`; `@Serializable data class AgentsConfig(agents: Map<String, AgentDef>)`; `class ToolCatalog(providers: List<ToolProvider>) { suspend fun select(names: List<String>): List<Tool> }` (nome desconhecido = erro de montagem); prompts neutros `ORCHESTRATOR_PROMPT`, `KNOWLEDGE_PROMPT`, `ORDERS_PROMPT`, `ESCALATION_PROMPT` (sem marca); `cli`: `suspend fun assemble(events: EventSink): Agent` (orquestrador com os 3 especialistas) e `Main` que lê uma pergunta e imprime a resposta.
+- Consumes: `Agent`, `Tool`, `ToolProvider`, `LocalToolProvider`, `McpToolProvider`, as guardas e `GuardPolicy` (Tarefa 7), `ReviewLoop` e `AnswerCustomer` (Tarefa 8.2), `SearchKbTool`, os gateways JSON.
+- Produces: `fun subAgentTool(name: String, description: String, newAgent: () -> Agent): Tool` (entrada `{ "task": string }`; um agente novo por chamada, porque `Agent` guarda histórico); `@Serializable data class AgentDef(tools: List<String>, maxTurns: Int = 4)`; `@Serializable data class AgentsConfig(agents: Map<String, AgentDef>)`; `class ToolCatalog(providers: List<ToolProvider>) { suspend fun select(names: List<String>): List<Tool> }`; prompts `ORCHESTRATOR_PROMPT`, `KNOWLEDGE_PROMPT`, `ORDERS_PROMPT`, `ESCALATION_PROMPT`, `REVIEWER_PROMPT` (em inglês); `class DSupportAssembly(llm, toolProviders, agents, tickets, maxRevisions = 2) { suspend fun answerCustomer(): AnswerCustomer }`.
 
-- [ ] **Step 1:** Claude escreve o guia: subagente é uma ferramenta; contexto e ferramentas por agente; `coroutineScope` + `async` para turnos com várias chamadas; ordem dos resultados preservada.
-- [ ] **Step 2:** Testes (Diego): `duas chamadas no mesmo turno rodam em paralelo` (`runTest`, cada ferramenta com `delay(1000)`, tempo virtual total = 1000, não 2000); `resultados voltam na ordem dos pedidos`; `erro em uma ferramenta não cancela a outra`; `subAgentTool executa o agente com a tarefa e devolve a resposta`; `ToolCatalog.select lança erro para nome desconhecido`; `o orquestrador montado não tem nenhuma ferramenta de dados`; `dois pedidos paralelos de create_ticket para o mesmo e-mail resultam em um ticket` (usa o `TicketDedup` da Tarefa 7, já pronta, sobre um `TicketGateway` simulado).
-- [ ] **Step 3:** Rodar `./gradlew :core:jvmTest` → FAIL.
-- [ ] **Step 4:** Diego implementa; prompts migrados do estudo e neutralizados; `config/agents.json` define as ferramentas de cada especialista (lista de permissão). Ligar as guardas da Tarefa 7 na montagem (`Redaction`, `IdentityGate`, `RedactResults`, `MentionTicket` e, por último, `TicketDedup`) e chamar `GuardPolicy().validate(tools, hooks)`.
-- [ ] **Step 5:** Rodar `./gradlew :core:jvmTest :core:compileKotlinWasmJs` → PASS. Rodar `./gradlew :cli:run` com `ANTHROPIC_API_KEY` exportada (pelo Diego) e conferir a resposta a "Qual o prazo para devolver um produto?".
-- [ ] **Step 6:** Commit único e tag `etapa-6`.
+- [ ] **Step 1:** Claude escreve o guia bilíngue (feito).
+- [ ] **Step 2:** Testes (Diego), `given … when … then should …`, MockK: os de `AgentTest` (paralelo, ordem, falha isolada, exceção de guarda, guardas por chamada), `SubAgentToolTest`, `ToolCatalogTest`, `AgentsConfigTest`, `DSupportAssemblyTest` e `EscalationAgentTest` (dois `create_ticket` paralelos do mesmo cliente → um ticket só), todos listados no guia.
+- [ ] **Step 3:** Rodar `./gradlew test` → FAIL.
+- [ ] **Step 4:** Diego implementa; prompts adaptados dos rascunhos do guia; `config/agents.json` com a lista de permissão. A montagem liga as guardas `[Redaction, IdentityGate, RedactResults, MentionTicket, TicketDedup]` (`TicketDedup` por último) e chama `GuardPolicy().validate`.
+- [ ] **Step 5:** Rodar `./gradlew test` → PASS. Rodar `REFERENCE_DATE=2026-10-15 ./gradlew :cli:run --args="..."` com `ANTHROPIC_API_KEY` exportada (pelo Diego), conferindo o pedido 1042 (atraso, ticket) e uma pergunta de política.
+- [ ] **Step 6:** Commit único e tag `etapa-6` (zerar `data/tickets.json` antes).
 
 ### Task 7: Guardas (etapa 7) [M]
 

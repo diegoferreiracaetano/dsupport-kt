@@ -66,10 +66,13 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [ ] Prova do critério: adicionar o servidor de tickets só editando a configuração
 
 ### E6 — Multi-agentes e paralelismo [D] · tag `etapa-6`
-- [ ] Guia `docs/stages/6-multi-agents.pt-BR.md`
-- [ ] `subAgentTool`, `ToolCatalog`, `config/agents.json` (lista de permissão por agente)
-- [ ] Turnos com várias chamadas rodam em paralelo, com ordem preservada
-- [ ] Prompts neutros; orquestrador sem ferramenta de dados
+- [x] Guia `docs/stages/6-multi-agents.pt-BR.md`
+- [ ] `subAgentTool` (um agente novo por chamada), `ToolCatalog`, `config/agents.json` (lista de permissão por agente)
+- [ ] Turnos com várias chamadas rodam em paralelo, com ordem preservada e falhas isoladas
+- [ ] Prompts neutros em inglês; orquestrador sem ferramenta de dados
+- [ ] `DSupportAssembly`: guardas na ordem (`TicketDedup` por último) e `GuardPolicy` na montagem
+- [ ] Dois `create_ticket` paralelos geram um ticket só (de ponta a ponta)
+- [ ] `REFERENCE_DATE` suportada, inclusive no `mcp-orders`
 - [ ] Primeira execução de ponta a ponta com a API (`:cli:run`)
 
 ### E7 — Guardas [M] · tag `etapa-7`
