@@ -59,9 +59,9 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 - [x] Help-center articles in `data/kb/`
 
 ### E5 — MCP with the official SDK [D] · tag `etapa-5`
-- [ ] Guide `docs/stages/5-mcp.md` (version and transport confirmed in the documentation)
-- [ ] `mcp-orders` and `mcp-tickets` servers
-- [ ] `McpToolProvider` reading `config/mcp-servers.json`, with a per-call timeout
+- [x] Guide `docs/stages/5-mcp.md` (version and transport confirmed in the SDK sources)
+- [ ] `McpToolServer` and the `mcp-orders` and `mcp-tickets` servers
+- [ ] `McpConnector` (stdio) and `McpToolProvider` reading `config/mcp-servers.json`, with a per-call timeout
 - [ ] A server that crashes or fails to start returns an error without taking the agent down
 - [ ] Proof of the criterion: add the tickets server by editing the configuration only
 

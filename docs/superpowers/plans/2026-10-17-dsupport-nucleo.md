@@ -132,20 +132,23 @@
 ### Task 5: MCP com o SDK oficial (etapa 5) [D]
 
 **Files:**
-- Create: `docs/stages/5-mcp.md` (guia, Claude), `core/.../config/McpServersConfig.kt`, `adapters/src/jvmMain/.../mcp/McpToolProvider.kt`, `mcp-orders/src/main/kotlin/dsupport/mcp/orders/Main.kt`, `mcp-tickets/src/main/kotlin/dsupport/mcp/tickets/Main.kt`, `config/mcp-servers.json`
-- Test: `adapters/src/jvmTest/.../mcp/McpToolProviderTest.kt`, `mcp-orders/src/test/.../OrdersServerTest.kt`
+- Create: `docs/stages/5-mcp.md` e `.pt-BR.md` (guia, Claude)
+- Create: `core/.../config/McpServersConfig.kt`, `config/mcp-servers.json`
+- Create: `adapters/src/jvmMain/.../mcp/{McpToolServer,McpConnection,McpConnector,StdioMcpConnector,McpToolProvider,McpServerException}.kt`
+- Create: `mcp-orders/src/main/kotlin/dsupport/mcp/orders/Main.kt`, `mcp-tickets/src/main/kotlin/dsupport/mcp/tickets/Main.kt` (substituem os provisórios)
+- Test: `core/.../config/McpServersConfigTest.kt`, `adapters/src/jvmTest/.../mcp/{McpToolProviderTest,McpToolServerTest}.kt`, `mcp-orders/src/test/.../StdioMcpConnectorTest.kt`
 
 **Interfaces:**
-- Consumes: `Tool`, `ToolProvider`, `ToolSpec`, `GetOrderStatusTool`, `TrackShipmentTool`, `CreateTicketTool`, gateways JSON (Tarefa 3).
-- Produces: `@Serializable data class McpServerConfig(name: String, command: List<String>, env: Map<String, String> = emptyMap())`; `@Serializable data class McpServersConfig(servers: List<McpServerConfig>)`; `class McpToolProvider(config: McpServersConfig, callTimeoutMs: Long = 15_000) : ToolProvider, AutoCloseable`; servidores `mcp-orders` (`get_order_status`, `track_shipment`) e `mcp-tickets` (`create_ticket`, `get_ticket`) que reutilizam as ferramentas do `core` sobre os gateways JSON, lendo `DATA_DIR`.
+- Consumes: `Tool`, `ToolProvider`, `ToolSpec`, `ToolResult`, as ferramentas e os gateways JSON da Tarefa 3.
+- Produces: `@Serializable data class McpServerConfig(name: String, command: List<String>, env: Map<String, String> = emptyMap())`; `@Serializable data class McpServersConfig(servers: List<McpServerConfig>)`; `class McpToolServer(name: String, version: String, tools: List<Tool>) { suspend fun serve(input: InputStream, output: OutputStream) }`; `interface McpConnection : AutoCloseable { suspend fun listTools(): List<ToolSpec>; suspend fun callTool(name: String, args: JsonObject): ToolResult }`; `fun interface McpConnector { suspend fun connect(server: McpServerConfig): McpConnection }`; `class StdioMcpConnector(startTimeoutMs: Long = 10_000) : McpConnector`; `class McpToolProvider(config: McpServersConfig, connector: McpConnector = StdioMcpConnector(), callTimeoutMs: Long = 15_000) : ToolProvider, AutoCloseable`; `class McpServerException(server: String, message: String, cause: Throwable? = null) : Exception`.
 
-- [ ] **Step 1:** Claude confirma na documentação do SDK a versão, o transporte stdio de cliente e servidor e a API de registro de ferramentas, e escreve o guia (handshake `initialize`, `tools/list`, `tools/call`; stdout é o canal do protocolo, logs vão para stderr).
-- [ ] **Step 2:** Testes (Diego): `OrdersServerTest`: sobe `mcp-orders` e `tools/list` devolve `get_order_status` e `track_shipment` com schema; `McpToolProviderTest`: `descobre as ferramentas do servidor e as expõe como Tool`; `chamar get_order_status com e-mail certo devolve o pedido`; `servidor que não existe no PATH gera erro claro, não trava`; `servidor que morre durante a chamada devolve ToolResult(isError=true)`; `chamada acima de callTimeoutMs devolve ToolResult(isError=true)`.
-- [ ] **Step 3:** Rodar `./gradlew :mcp-orders:test :adapters:jvmTest --tests "dsupport.adapters.mcp.*"` → FAIL.
-- [ ] **Step 4:** Diego implementa os dois servidores e o `McpToolProvider`; `config/mcp-servers.json` lista só `orders` primeiro.
-- [ ] **Step 5:** Critério 2 da spec: acrescentar `tickets` apenas editando `config/mcp-servers.json` e ver `create_ticket` aparecer em `McpToolProvider.tools()` sem mudar código de agente (teste `adicionar servidor é só configuração`).
-- [ ] **Step 6:** Rodar os testes → PASS. Claude revisa.
-- [ ] **Step 7:** Commit único e tag `etapa-5`.
+- [ ] **Step 1:** Claude confirma o SDK nos fontes (feito: versão 0.15.0, stdio, API de `Server`/`Client`) e escreve o guia bilíngue.
+- [ ] **Step 2:** Testes (Diego), uma classe por classe de produção, MockK, `given … when … then should …`: os de `McpToolProviderTest`, `McpToolServerTest`, `StdioMcpConnectorTest` e `McpServersConfigTest` listados no guia.
+- [ ] **Step 3:** Rodar `./gradlew :adapters:jvmTest :mcp-orders:test :core:jvmTest` → FAIL.
+- [ ] **Step 4:** Diego implementa; `mcp-orders` e `mcp-tickets` são `suspend fun main()` de poucas linhas sobre o `McpToolServer`; `config/mcp-servers.json` lista só `orders` primeiro.
+- [ ] **Step 5:** Critério 2 da spec: acrescentar `tickets` apenas editando `config/mcp-servers.json` e ver `create_ticket` aparecer em `McpToolProvider.tools()` sem mudar código de agente.
+- [ ] **Step 6:** Rodar os testes → PASS e `./gradlew installDist`. Claude revisa.
+- [ ] **Step 7:** ADR `0002-mcp-for-external-systems`, commit único e tag `etapa-5`.
 
 ### Task 6: Multi-agentes e paralelismo (etapa 6) [D]
 

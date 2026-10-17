@@ -59,9 +59,9 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [x] Artigos da central de ajuda em `data/kb/`
 
 ### E5 — MCP com o SDK oficial [D] · tag `etapa-5`
-- [ ] Guia `docs/stages/5-mcp.pt-BR.md` (versão e transporte confirmados na documentação)
-- [ ] Servidores `mcp-orders` e `mcp-tickets`
-- [ ] `McpToolProvider` lendo `config/mcp-servers.json`, com tempo limite por chamada
+- [x] Guia `docs/stages/5-mcp.pt-BR.md` (versão e transporte confirmados nos fontes do SDK)
+- [ ] `McpToolServer` e os servidores `mcp-orders` e `mcp-tickets`
+- [ ] `McpConnector` (stdio) e `McpToolProvider` lendo `config/mcp-servers.json`, com tempo limite por chamada
 - [ ] Servidor que cai ou não sobe devolve erro sem derrubar o agente
 - [ ] Prova do critério: adicionar o servidor de tickets só editando a configuração
 
