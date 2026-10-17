@@ -1,3 +1,3 @@
 package dsupport.cli
 
-fun main() = println("cli: implementado na etapa 6")
+fun main() = println("cli: implemented in stage 6")

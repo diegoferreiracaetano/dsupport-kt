@@ -10,7 +10,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 
-/** Modelo roteirizado: devolve respostas fixas, em ordem, e guarda o que recebeu. Só para testes. */
+/** Returns canned replies in order and records every request. For tests only. */
 class ScriptedLlmClient(
     private val replies: List<LlmReply>,
     private val structuredReplies: List<String> = emptyList(),
@@ -23,13 +23,13 @@ class ScriptedLlmClient(
     override suspend fun next(request: LlmRequest): LlmReply {
         received += request.copy(messages = request.messages.toList())
         return replies.getOrNull(nextReply++)
-            ?: error("ScriptedLlmClient: acabaram as respostas roteirizadas (pedido nº $nextReply)")
+            ?: error("ScriptedLlmClient: no scripted replies left (request #$nextReply)")
     }
 
     override suspend fun structured(request: LlmRequest, schema: OutputSchema): JsonObject {
         received += request.copy(messages = request.messages.toList())
         val raw = structuredReplies.getOrNull(nextStructured++)
-            ?: error("ScriptedLlmClient: acabaram as respostas estruturadas (pedido nº $nextStructured)")
+            ?: error("ScriptedLlmClient: no structured replies left (request #$nextStructured)")
         return Json.parseToJsonElement(raw).jsonObject
     }
 

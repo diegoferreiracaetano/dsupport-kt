@@ -13,29 +13,26 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-/**
- * Suíte de contrato: qualquer LlmClient (o roteirizado, o da Anthropic, um futuro) tem que passar nela.
- * Quem estende diz como montar o cliente para cada [Scenario].
- */
+/** Contract suite every LlmClient must pass. Subclasses build the client for each [Scenario]. */
 abstract class LlmClientContract {
     abstract fun clientFor(scenario: Scenario): LlmClient
 
     private val request = LlmRequest(
-        system = "Você é um assistente.",
-        messages = listOf(Message.User("Cadê meu pedido 1042?")),
+        system = "You are an assistant.",
+        messages = listOf(Message.User("Where is my order 1042?")),
         tools = emptyList(),
     )
-    private val schema = OutputSchema("responder", "Resposta final.", buildJsonObject { put("type", "object") })
+    private val schema = OutputSchema("responder", "Final answer.", buildJsonObject { put("type", "object") })
 
     @Test
-    fun `texto vira LlmReply Text`() = runTest {
-        val reply = clientFor(Scenario.Text("Seu pedido chega amanhã.")).next(request)
+    fun `text becomes LlmReply Text`() = runTest {
+        val reply = clientFor(Scenario.Text("Your order arrives tomorrow.")).next(request)
 
-        assertEquals("Seu pedido chega amanhã.", assertIs<LlmReply.Text>(reply).text)
+        assertEquals("Your order arrives tomorrow.", assertIs<LlmReply.Text>(reply).text)
     }
 
     @Test
-    fun `pedido de ferramenta preserva id nome e argumentos`() = runTest {
+    fun `tool request keeps id name and arguments`() = runTest {
         val args = buildJsonObject { put("order_id", "1042") }
         val reply = clientFor(Scenario.ToolCall("call_1", "get_order_status", args)).next(request)
 
@@ -46,7 +43,7 @@ abstract class LlmClientContract {
     }
 
     @Test
-    fun `saida estruturada devolve o objeto`() = runTest {
+    fun `structured output returns the object`() = runTest {
         val expected: JsonObject = buildJsonObject { put("answer", "ok") }
 
         assertEquals(expected, clientFor(Scenario.Structured(expected)).structured(request, schema))

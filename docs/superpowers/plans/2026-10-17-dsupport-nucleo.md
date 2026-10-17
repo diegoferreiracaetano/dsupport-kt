@@ -22,6 +22,7 @@
 - Nenhuma marca de loja nos dados nem nos prompts.
 - `data/tickets.json` volta a `[]` antes de cada commit; `traces/` no `.gitignore`; `reports/` versionado.
 - Revisões do revisor: no máximo 2 (`maxRevisions = 2`); `maxTurns` padrão do agente = 5.
+- **Code style:** no comments in code (KDoc only, where it serves as documentation). Identifiers, KDoc, error messages, log text and test names in English. The test names and messages written in Portuguese in this plan are descriptions: write them in English. Customer-facing text (knowledge-base articles, agent prompts, replies) is product content and is decided separately.
 - **Commits:** um commit por etapa, ao final dela, só no nome do usuário (sem `Co-Authored-By`), seguido da tag `etapa-N`. Não commitar por passo.
 - **Autoria:** tarefas marcadas **[D]** são escritas por Diego, depois de um guia em `docs/etapas/N.md` escrito antes por Claude; Claude revisa e roda os testes. As marcadas **[M]** são feitas por Claude.
 - Antes de cada tarefa, explicar o que será feito; depois dos testes, esperar a confirmação do Diego para tagear e seguir.
@@ -87,7 +88,7 @@
 - Produces: `class AnthropicLlmClient(apiKey: String, modelId: String = "claude-haiku-5-5", http: HttpClient, maxRetries: Int = 2) : LlmClient`; `class LlmApiException(val status: Int?, message: String) : Exception`.
 
 - [ ] **Step 1:** Claude escreve o guia: tool use na API, `tool_use`/`tool_result` com `id`, o resultado voltando como `user`, saída estruturada por `tool_choice` forçado, histórico completo a cada chamada.
-- [ ] **Step 2:** Testes com `MockEngine` (Diego): `mapeia system, mensagens e tools para o JSON da API`; `ToolResult vira bloco tool_result com tool_use_id dentro de mensagem user, e vários resultados do mesmo turno vão numa só mensagem`; `omite tools e tool_choice quando não há ferramentas`; `lê tool_use em vários blocos como ToolCalls`; `structured força tool_choice com o nome do schema e devolve o input`; `429 e 5xx repetem até maxRetries e depois lançam LlmApiException`; `corpo sem content lança LlmApiException`; e `AnthropicLlmClientContractTest` estendendo `LlmClientContract` sobre o MockEngine.
+- [ ] **Step 2:** Testes com `MockEngine` (Diego): `mapeia system, mensagens e tools para o JSON da API`; `ToolResult vira bloco tool_result com tool_use_id dentro de mensagem user, e vários resultados do mesmo turno vão numa só mensagem`; `omite tools quando não há ferramentas e nunca envia tool_choice`; `mensagens user seguidas viram uma só, com tool_result antes do texto`; `bloco thinking lança LlmApiException`; `lê tool_use em vários blocos como ToolCalls`; `structured envia output_config.format (json_schema) e lê o objeto do texto da resposta`; `429 e 5xx repetem até maxRetries e depois lançam LlmApiException`; `corpo sem content lança LlmApiException`; e `AnthropicLlmClientContractTest` estendendo `LlmClientContract` sobre o MockEngine.
 - [ ] **Step 3:** Rodar `./gradlew :adapters:jvmTest --tests "dsupport.adapters.llm.*"` → FAIL.
 - [ ] **Step 4:** Diego implementa `AnthropicLlmClient` e `AnthropicMapping` (Ktor client em `commonMain`, `kotlinx.serialization`); decisão SDK oficial vs HTTP direto registrada em `docs/adr/0003-cliente-llm.md`.
 - [ ] **Step 5:** Rodar os mesmos testes → PASS. Claude revisa o código.

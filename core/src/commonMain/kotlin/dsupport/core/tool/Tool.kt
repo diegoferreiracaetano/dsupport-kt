@@ -2,7 +2,7 @@ package dsupport.core.tool
 
 import kotlinx.serialization.json.JsonObject
 
-/** O contrato que o modelo "lê" para decidir: nome, descrição e JSON Schema da entrada. */
+/** The contract the model reads to decide: name, description and the JSON Schema of the input. */
 data class ToolSpec(
     val name: String,
     val description: String,
@@ -13,13 +13,13 @@ data class ToolSpec(
 
 data class ToolResult(val content: String, val isError: Boolean = false)
 
-/** Uma capacidade do agente. Local (Kotlin no processo) ou remota (MCP): o agente não percebe a diferença. */
+/** A capability of the agent, local or remote (MCP). The agent cannot tell the difference. */
 interface Tool {
     val spec: ToolSpec
     suspend fun run(args: JsonObject): ToolResult
 }
 
-/** De onde vêm as ferramentas: uma lista local, um servidor MCP, etc. */
+/** Where tools come from: a local list, an MCP server, and so on. */
 interface ToolProvider {
     suspend fun tools(): List<Tool>
 }

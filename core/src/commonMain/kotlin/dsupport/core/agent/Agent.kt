@@ -13,8 +13,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlin.time.TimeSource
 
 /**
- * O loop agêntico: o modelo decide, o código executa. O modelo nunca executa nada, só pede.
- * Sempre com limite de turnos.
+ * The agentic loop: the model decides, the code executes. The model never runs anything, it only asks.
+ * The loop is always bounded by [maxTurns].
  */
 class Agent(
     val name: String,
@@ -29,26 +29,23 @@ class Agent(
     private val specs = tools.map { it.spec }
     private var history = mutableListOf<Message>()
 
-    /** O que as ferramentas devolveram nesta conversa: a base para conferir a resposta final. */
+    /** What the tools returned in this conversation, used to check the final answer. */
     val evidence: List<String>
         get() = history.filterIsInstance<Message.ToolResult>().map { it.content }
 
-    /** Começa uma conversa nova. */
     suspend fun run(task: String): String {
         history = mutableListOf(Message.User(task))
         events.emit(AgentEvent.AgentStarted(name, depth, task))
         return loop()
     }
 
-    /** Continua a MESMA conversa (o revisor pede ajuste sem refazer as consultas). */
     suspend fun followUp(message: String): String {
         history += Message.User(message)
         return loop()
     }
 
-    /** Pede a resposta final no formato do schema, com a conversa inteira como contexto. */
     suspend fun finish(schema: OutputSchema): JsonObject {
-        val closing = Message.User("Devolva agora a sua resposta final no formato ${schema.name}.")
+        val closing = Message.User("Now return your final answer in the ${schema.name} format.")
         return llm.structured(LlmRequest(system, history + closing, specs), schema)
     }
 
@@ -67,7 +64,6 @@ class Agent(
                     return reply.text
                 }
                 is LlmReply.ToolCalls -> {
-                    // O histórico guarda o pedido original do modelo: o id tem que bater com o resultado.
                     history += Message.AssistantToolCalls(reply.calls)
                     for (call in reply.calls) {
                         val result = execute(call.tool, call.args)
@@ -76,18 +72,18 @@ class Agent(
                 }
             }
         }
-        return "Limite de $maxTurns turnos atingido. Encaminhando a um atendente."
+        return "Turn limit of $maxTurns reached. Escalating to a human agent."
     }
 
     private suspend fun execute(toolName: String, args: JsonObject): ToolResult {
         events.emit(AgentEvent.ToolStarted(name, toolName, args.toString()))
         val mark = TimeSource.Monotonic.markNow()
         val result = try {
-            toolsByName[toolName]?.run(args) ?: ToolResult("erro: ferramenta '$toolName' não existe", isError = true)
+            toolsByName[toolName]?.run(args) ?: ToolResult("error: tool '$toolName' does not exist", isError = true)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            ToolResult("erro ao executar '$toolName': ${e.message}", isError = true)
+            ToolResult("error running '$toolName': ${e.message}", isError = true)
         }
         events.emit(
             AgentEvent.ToolFinished(name, toolName, result.content, result.isError, mark.elapsedNow().inWholeMilliseconds),

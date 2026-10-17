@@ -1,3 +1,3 @@
 package dsupport.mcp.tickets
 
-fun main() = println("mcp-tickets: implementado na etapa 5")
+fun main() = println("mcp-tickets: implemented in stage 5")

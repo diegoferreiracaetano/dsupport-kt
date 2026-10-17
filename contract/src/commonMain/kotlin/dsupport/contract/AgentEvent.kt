@@ -3,13 +3,13 @@ package dsupport.contract
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** O que uma guarda fez: bloqueou a chamada, alterou os argumentos ou reescreveu um resultado/resposta. */
+/** What a guard did: blocked the call, changed its arguments, or rewrote a result or answer. */
 @Serializable
 enum class GuardAction { DENY, MODIFY, REWRITE }
 
 /**
- * Tudo que acontece durante uma pergunta. É a única fonte de trace, custo, métricas de avaliação
- * e da tela ao vivo: nenhum estado global.
+ * Everything that happens while a question is answered.
+ * It is the single source for traces, cost, evaluation metrics and the live screen.
  */
 @Serializable
 sealed interface AgentEvent {

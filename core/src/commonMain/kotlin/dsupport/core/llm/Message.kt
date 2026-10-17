@@ -4,7 +4,7 @@ import kotlinx.serialization.json.JsonObject
 
 data class ToolCall(val id: String, val tool: String, val args: JsonObject)
 
-/** O histórico da conversa, em vocabulário neutro: cada adaptador traduz para o formato do seu provedor. */
+/** Provider-neutral conversation history. Each adapter translates it to its own wire format. */
 sealed interface Message {
     data class User(val text: String) : Message
     data class AssistantToolCalls(val calls: List<ToolCall>) : Message

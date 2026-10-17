@@ -23,51 +23,51 @@ class AgentTest {
     private val emptySchema = buildJsonObject { put("type", "object") }
 
     private fun echoTool() = object : Tool {
-        override val spec = ToolSpec("echo", "Devolve o texto recebido.", emptySchema)
-        override suspend fun run(args: JsonObject) = ToolResult("eco: ${args["text"]}")
+        override val spec = ToolSpec("echo", "Returns the received text.", emptySchema)
+        override suspend fun run(args: JsonObject) = ToolResult("echo: ${args["text"]}")
     }
 
-    private fun call(id: String, tool: String) = ToolCall(id, tool, buildJsonObject { put("text", "oi") })
+    private fun call(id: String, tool: String) = ToolCall(id, tool, buildJsonObject { put("text", "hi") })
 
     @Test
-    fun `devolve a resposta final quando o modelo responde texto`() = runTest {
-        val llm = ScriptedLlmClient(listOf(LlmReply.Text("Olá!", usage)))
-        val agent = Agent("atendimento", llm, "Seja cordial.", tools = emptyList())
+    fun `returns the final answer when the model replies with text`() = runTest {
+        val llm = ScriptedLlmClient(listOf(LlmReply.Text("Hello!", usage)))
+        val agent = Agent("support", llm, "Be friendly.", tools = emptyList())
 
-        assertEquals("Olá!", agent.run("Oi"))
+        assertEquals("Hello!", agent.run("Hi"))
     }
 
     @Test
-    fun `executa a ferramenta pedida e devolve o resultado ao modelo`() = runTest {
+    fun `runs the requested tool and sends the result back to the model`() = runTest {
         val llm = ScriptedLlmClient(
             listOf(
                 LlmReply.ToolCalls(listOf(call("t1", "echo")), usage),
-                LlmReply.Text("pronto", usage),
+                LlmReply.Text("done", usage),
             ),
         )
-        val agent = Agent("atendimento", llm, "sys", tools = listOf(echoTool()))
+        val agent = Agent("support", llm, "sys", tools = listOf(echoTool()))
 
-        assertEquals("pronto", agent.run("faça eco"))
+        assertEquals("done", agent.run("echo this"))
 
         val secondRequest = llm.received[1]
         val result = secondRequest.messages.filterIsInstance<Message.ToolResult>().single()
         assertEquals("t1", result.callId)
         assertEquals("echo", result.tool)
-        assertTrue(result.content.startsWith("eco:"))
+        assertTrue(result.content.startsWith("echo:"))
         assertEquals(listOf(result.content), agent.evidence)
     }
 
     @Test
-    fun `ferramenta inexistente volta como erro sem derrubar o loop`() = runTest {
+    fun `unknown tool comes back as an error without breaking the loop`() = runTest {
         val llm = ScriptedLlmClient(
             listOf(
                 LlmReply.ToolCalls(listOf(call("t1", "cancel_order")), usage),
-                LlmReply.Text("não consegui", usage),
+                LlmReply.Text("could not do it", usage),
             ),
         )
-        val agent = Agent("atendimento", llm, "sys", tools = listOf(echoTool()))
+        val agent = Agent("support", llm, "sys", tools = listOf(echoTool()))
 
-        assertEquals("não consegui", agent.run("cancele"))
+        assertEquals("could not do it", agent.run("cancel it"))
 
         val result = llm.received[1].messages.filterIsInstance<Message.ToolResult>().single()
         assertTrue(result.isError)
@@ -75,25 +75,25 @@ class AgentTest {
     }
 
     @Test
-    fun `para no limite de turnos`() = runTest {
+    fun `stops at the turn limit`() = runTest {
         val looping = List(5) { LlmReply.ToolCalls(listOf(call("t$it", "echo")), usage) }
-        val agent = Agent("atendimento", ScriptedLlmClient(looping), "sys", tools = listOf(echoTool()), maxTurns = 5)
+        val agent = Agent("support", ScriptedLlmClient(looping), "sys", tools = listOf(echoTool()), maxTurns = 5)
 
-        assertEquals("Limite de 5 turnos atingido. Encaminhando a um atendente.", agent.run("loop"))
+        assertEquals("Turn limit of 5 reached. Escalating to a human agent.", agent.run("loop forever"))
     }
 
     @Test
-    fun `emite os eventos na ordem`() = runTest {
+    fun `emits events in order`() = runTest {
         val events = mutableListOf<AgentEvent>()
         val llm = ScriptedLlmClient(
             listOf(
                 LlmReply.ToolCalls(listOf(call("t1", "echo")), usage),
-                LlmReply.Text("pronto", usage),
+                LlmReply.Text("done", usage),
             ),
         )
-        val agent = Agent("atendimento", llm, "sys", tools = listOf(echoTool()), events = EventSink { events += it })
+        val agent = Agent("support", llm, "sys", tools = listOf(echoTool()), events = EventSink { events += it })
 
-        agent.run("faça eco")
+        agent.run("echo this")
 
         assertEquals(
             listOf("AgentStarted", "ModelCalled", "ToolStarted", "ToolFinished", "ModelCalled"),

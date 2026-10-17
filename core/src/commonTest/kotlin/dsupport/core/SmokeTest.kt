@@ -5,5 +5,5 @@ import kotlin.test.assertEquals
 
 class SmokeTest {
     @Test
-    fun `core compila e roda`() = assertEquals(2, 1 + 1)
+    fun `core compiles and runs`() = assertEquals(2, 1 + 1)
 }

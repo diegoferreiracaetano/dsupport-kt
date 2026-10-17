@@ -1,3 +1,3 @@
 package dsupport.mcp.orders
 
-fun main() = println("mcp-orders: implementado na etapa 5")
+fun main() = println("mcp-orders: implemented in stage 5")
