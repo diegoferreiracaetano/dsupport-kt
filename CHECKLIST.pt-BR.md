@@ -79,9 +79,9 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [x] Dois `create_ticket` paralelos geram um ticket só (no nível da guarda; de ponta a ponta na E6)
 
 ### E8.1 — Saída tipada [M] · tag `etapa-8.1`
-- [ ] `SupportAnswer` completo no `contract`
-- [ ] Validação em código (ticket inventado, confiança, fontes, intenção)
-- [ ] Esquema `answer_customer`
+- [x] `SupportAnswer` completo no `contract`
+- [x] Validação em código (ticket inventado, confiança, fontes, intenção)
+- [x] Esquema `answer_customer`
 
 ### E8.2 — Revisor e caso de uso [M] · tag `etapa-8.2`
 - [ ] `ReviewLoop` com no máximo 2 revisões e escalação por código

@@ -79,9 +79,9 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 - [x] Two parallel `create_ticket` calls produce a single ticket (guard level; end to end in E6)
 
 ### E8.1 — Typed output [M] · tag `etapa-8.1`
-- [ ] Complete `SupportAnswer` in `contract`
-- [ ] Validation in code (invented ticket, confidence, sources, intent)
-- [ ] `answer_customer` schema
+- [x] Complete `SupportAnswer` in `contract`
+- [x] Validation in code (invented ticket, confidence, sources, intent)
+- [x] `answer_customer` schema
 
 ### E8.2 — Reviewer and use case [M] · tag `etapa-8.2`
 - [ ] `ReviewLoop` with at most 2 revisions and escalation by code
