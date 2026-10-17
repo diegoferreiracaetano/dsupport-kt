@@ -1,0 +1,41 @@
+First real run against the API (stage 6), claude-haiku-5-5, REFERENCE_DATE=2026-10-15
+Question: "My order 1042 has not arrived. My email is ana@example.com"
+
+[orchestrator] started: My order 1042 has not arrived. My email is ana@example.com
+[orchestrator] model call: 841 in / 139 out tokens, 1918 ms
+[orchestrator] calls orders {"task":"Check the status, tracking and delivery progress for order number 1042. Customer email: ana...
+[orders] started: Check the status, tracking and delivery progress for order number 1042. Customer...
+[orders] model call: 727 in / 178 out tokens, 1349 ms
+[orders] calls get_order_status {"order_id":"1042","email":"ana@example.com"}
+[orders] calls track_shipment {"order_id":"1042","email":"ana@example.com"}
+[orders] track_shipment finished in 9 ms: {"ok":true,"carrier":"FastShip","tracking":"FS104200"}
+[orders] get_order_status finished in 12 ms: {"ok":true,"order_id":"1042","status":"in_transit","eta":"2026-10-05","late":true,"days_late":10,"it...
+[orders] model call: 1046 in / 190 out tokens, 1559 ms
+[orchestrator] orders finished in 2930 ms: Here is the status for order 1042 (customer email ana@example.com): ...
+[orchestrator] model call: 1147 in / 228 out tokens, 1604 ms
+[orchestrator] calls escalation {"task":"Delayed order. Order number: 1042. Customer email: ana@example.com. Summary: Customer repor...
+[escalation] started: Delayed order. Order number: 1042. Customer email: ana@example.com. Summary: Cus...
+[escalation] model call: 695 in / 271 out tokens, 1599 ms
+[escalation] calls create_ticket {"summary":"Delayed order 1042: customer reports order has not arrived. Status in transit with carri...
+[escalation] create_ticket finished in 17 ms: {"ok":true,"ticket_id":"TCK-1001"}
+[escalation] model call: 994 in / 8 out tokens, 767 ms
+[orchestrator] escalation finished in 2386 ms: TCK-1001
+[orchestrator] model call: 1356 in / 132 out tokens, 1528 ms
+[orchestrator] model call: 2075 in / 178 out tokens, 3636 ms
+[reviewer] model call: 803 in / 324 out tokens, 3015 ms
+review round 1: rejected (4 problems)
+[orchestrator] model call: 1827 in / 168 out tokens, 1349 ms
+[orchestrator] model call: 2582 in / 213 out tokens, 1860 ms
+[reviewer] model call: 838 in / 14 out tokens, 1082 ms
+review round 2: approved
+completed
+
+Total: 12 model calls, 14931 in / 2043 out tokens
+{
+    "answer": "Hi Ana, thanks for your patience. Your order 1042 is in transit with FastShip (tracking number FS104200). It is recorded as late by 10 days against the expected delivery date of 2026-10-05. The order includes: 1x Noise Cancelling Headphones and 2x USB-C Cable. I've opened ticket TCK-1001 for this delay. The tracking data doesn't show a current location, but you can check the latest updates on the FastShip website using tracking number FS104200.",
+    "intent": "order",
+    "sources": [],
+    "confidence": 0.8,
+    "escalated": true,
+    "ticket_id": "TCK-1001"
+}
