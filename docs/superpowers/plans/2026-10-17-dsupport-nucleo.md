@@ -220,21 +220,24 @@
 - [ ] **Step 4:** Rodar os testes → PASS.
 - [ ] **Step 5:** Commit único e tag `etapa-8.2`.
 
-### Task 9.1: Eventos, trace e custo (etapa 9.1) [D]
+### Task 9.1: Observability: eventos, trace e custo (etapa 9.1) [D]
 
 **Files:**
-- Create: `docs/stages/9-1-trace.md` (guia, Claude), `core/.../trace/{TraceReport,AgentCost}.kt`, `adapters/src/jvmMain/.../trace/TraceFiles.kt`
-- Test: `core/src/commonTest/.../trace/TraceReportTest.kt`, `adapters/src/jvmTest/.../trace/TraceFilesTest.kt`
+- Create: `docs/stages/9-1-trace.md` e `.pt-BR.md` (guia, Claude)
+- Modify: `contract/.../AgentEvent.kt` (campos `runId` e `parentRunId`, com padrões), `core/.../agent/Agent.kt`, `core/.../review/ReviewLoop.kt`
+- Create: `core/.../agent/{RunIds,RunContext}.kt`, `core/.../trace/{TraceReport,AgentCost}.kt`, `adapters/src/jvmMain/.../trace/TraceFiles.kt`
+- Modify: `cli/.../Main.kt` (imprime árvore e custo, salva o rastro)
+- Test: `core/src/jvmTest/.../agent/{AgentTest,SequentialRunIdsTest}.kt`, `core/.../trace/TraceReportTest.kt`, `adapters/src/jvmTest/.../trace/TraceFilesTest.kt`, `contract/.../AgentEventTest.kt`
 
 **Interfaces:**
-- Consumes: `AgentEvent` (Tarefa 1).
-- Produces: `data class AgentCost(agent: String, calls: Int, inputTokens: Int, outputTokens: Int, modelMs: Long)`; `object TraceReport { fun tree(events: List<AgentEvent>): String; fun byAgent(events: List<AgentEvent>): List<AgentCost>; fun slowest(events: List<AgentEvent>, n: Int = 3): List<AgentEvent> }`; `fun saveTrace(dir: Path, title: String, events: List<AgentEvent>): Path` (JSON, um arquivo por pergunta).
+- Consumes: `AgentEvent` (Tarefa 1), `ModelCalled` de todas as chamadas, inclusive as estruturadas (Tarefa 9.2, parte 1), `subAgentTool` (Tarefa 6).
+- Produces: `runId: String = ROOT_RUN` no fim de `AgentStarted`, `ModelCalled`, `ToolStarted`, `ToolFinished` e `GuardActed`; `parentRunId: String? = null` em `AgentStarted`; `fun interface RunIds { fun next(): String }`, `class SequentialRunIds : RunIds` (seguro para concorrência); `class RunContext(runId: String, parentRunId: String?) : AbstractCoroutineContextElement`; `Agent(..., depth, runIds: RunIds = SequentialRunIds())`; `data class AgentCost(agent: String, calls: Int, inputTokens: Int, outputTokens: Int, modelMs: Long)`; `class TraceReport { fun tree(events): String; fun byAgent(events): List<AgentCost>; fun slowest(events, n: Int = 3): List<AgentEvent> }`; `class TraceFiles(now: () -> String) { fun save(dir: Path, title: String, events: List<AgentEvent>): Path }`.
 
-- [ ] **Step 1:** Claude escreve o guia: de onde vêm o custo e a árvore (só dos eventos); por que não há estado global; aninhamento por `depth`.
-- [ ] **Step 2:** Testes (Diego): `a árvore aninha o evento do especialista sob a ferramenta que o chamou`; `byAgent soma tokens por agente (2 turnos de 1000 → 2000 do orquestrador; 300 do especialista)`; `slowest ignora o evento da pergunta inteira`; `saveTrace grava JSON legível com o nome do agente`.
-- [ ] **Step 3:** Rodar `./gradlew :core:jvmTest --tests "dsupport.core.trace.*" :adapters:jvmTest --tests "dsupport.adapters.trace.*"` → FAIL.
-- [ ] **Step 4:** Diego implementa; o `cli` imprime a árvore e o custo ao final de cada pergunta, a partir do `Flow` do `AnswerCustomer`.
-- [ ] **Step 5:** Rodar os testes → PASS. Claude revisa.
+- [ ] **Step 1:** Claude escreve o guia bilíngue (feito).
+- [ ] **Step 2:** Testes (Diego), `given … when … then should …`: os de `AgentTest` (mesmo `runId`, pai propagado pelo contexto, ids distintos em paralelo), `SequentialRunIdsTest`, `TraceReportTest` (aninhamento, especialistas de mesmo nome em paralelo, soma por agente, mais lentos), `TraceFilesTest` e o de compatibilidade em `AgentEventTest`, todos listados no guia.
+- [ ] **Step 3:** Rodar `./gradlew test` → FAIL.
+- [ ] **Step 4:** Diego implementa; um `RunIds` por pergunta, compartilhado na montagem.
+- [ ] **Step 5:** Rodar `./gradlew test` → PASS e uma execução real com a árvore e a tabela de custo. Claude revisa.
 - [ ] **Step 6:** Commit único e tag `etapa-9.1`.
 
 ### Task 9.2: Avaliação (etapa 9.2) [M + D]

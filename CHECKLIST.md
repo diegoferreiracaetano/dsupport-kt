@@ -91,8 +91,9 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 - [x] `AnswerCustomer` returning `Flow<AgentEvent>`, one per question
 
 ### E9.1 — Events, trace and cost [D] · tag `etapa-9.1`
-- [ ] Guide `docs/stages/9-1-trace.md`
-- [ ] `TraceReport` (tree, cost per agent, slowest) and a JSON trace file
+- [x] Guide `docs/stages/9-1-trace.md`
+- [ ] `runId` and `parentRunId` on events, parent propagated through the coroutine context
+- [ ] `TraceReport` (tree, cost per agent, slowest) and a JSON trace file (`TraceFiles`)
 - [ ] No global state
 
 ### E9.2 — Evals [M + D] · tag `etapa-9.2`
