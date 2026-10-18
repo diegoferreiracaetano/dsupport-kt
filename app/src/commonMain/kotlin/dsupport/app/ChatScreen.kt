@@ -12,6 +12,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -64,6 +66,8 @@ import dsupport.core.trace.TraceReport
 private val ContentWidth = 740.dp
 private val TraceWidth = 420.dp
 
+private val CompactBelow = 840.dp
+
 @Composable
 fun ChatScreen(
     state: ChatState,
@@ -72,14 +76,25 @@ fun ChatScreen(
     dark: Boolean = isSystemInDarkTheme(),
 ) {
     val strings = Strings.of(state.language)
-    var traceVisible by remember { mutableStateOf(true) }
     DSupportTheme(dark) {
         Surface(Modifier.fillMaxSize(), color = palette.background) {
-            Row(Modifier.fillMaxSize()) {
-                Conversation(state, strings, traceVisible, onSend, onLanguage, { traceVisible = !traceVisible }, Modifier.weight(1f).fillMaxHeight())
-                if (traceVisible) {
-                    Box(Modifier.width(1.dp).fillMaxHeight().background(palette.border))
-                    TracePanel(state, strings, Modifier.width(TraceWidth).fillMaxHeight())
+            BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
+                val compact = maxWidth < CompactBelow
+                var traceVisible by remember(compact) { mutableStateOf(!compact) }
+                val toggle = { traceVisible = !traceVisible }
+                if (compact) {
+                    Box(Modifier.fillMaxSize()) {
+                        Conversation(state, strings, traceVisible, onSend, onLanguage, toggle, Modifier.fillMaxSize())
+                        if (traceVisible) TracePanel(state, strings, Modifier.fillMaxSize(), onClose = toggle)
+                    }
+                } else {
+                    Row(Modifier.fillMaxSize()) {
+                        Conversation(state, strings, traceVisible, onSend, onLanguage, toggle, Modifier.weight(1f).fillMaxHeight())
+                        if (traceVisible) {
+                            Box(Modifier.width(1.dp).fillMaxHeight().background(palette.border))
+                            TracePanel(state, strings, Modifier.width(TraceWidth).fillMaxHeight())
+                        }
+                    }
                 }
             }
         }
@@ -315,7 +330,7 @@ private fun Composer(running: Boolean, strings: Strings, onSend: (String) -> Uni
 }
 
 @Composable
-private fun TracePanel(state: ChatState, strings: Strings, modifier: Modifier) {
+private fun TracePanel(state: ChatState, strings: Strings, modifier: Modifier, onClose: (() -> Unit)? = null) {
     val report = remember { TraceReport() }
     val events: List<AgentEvent> = if (state.running || state.liveEvents.isNotEmpty()) {
         state.liveEvents
@@ -323,7 +338,17 @@ private fun TracePanel(state: ChatState, strings: Strings, modifier: Modifier) {
         (state.messages.lastOrNull { it is ChatMessage.Reply } as? ChatMessage.Reply)?.events.orEmpty()
     }
     Column(modifier.background(palette.surface).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text(if (state.running) strings.liveTrace else strings.lastTrace, style = MaterialTheme.typography.titleMedium, color = palette.text)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(if (state.running) strings.liveTrace else strings.lastTrace, style = MaterialTheme.typography.titleMedium, color = palette.text)
+            onClose?.let {
+                Text(
+                    strings.hideTrace,
+                    Modifier.clip(Radius).clickable(onClick = it).padding(horizontal = 8.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = palette.accent,
+                )
+            }
+        }
         if (events.isEmpty()) {
             Text(strings.traceHint, style = MaterialTheme.typography.bodyMedium, color = palette.textMuted)
         } else {
