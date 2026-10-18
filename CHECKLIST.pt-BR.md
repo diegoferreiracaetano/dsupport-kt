@@ -105,7 +105,7 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 ### E10 — Fechamento da fase 1 [M] · tag `fase-1`
 - [x] README com diagrama, como rodar, métricas e um trecho de trace (o ADR 0002 vem com a etapa 5)
 - [x] ADRs 0001 a 0003
-- [ ] Critérios de sucesso da spec conferidos e todas as tags existem
+- [x] Critérios de sucesso da spec conferidos e todas as tags existem
 
 ---
 

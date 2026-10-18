@@ -105,7 +105,7 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 ### E10 — Phase 1 wrap-up [M] · tag `fase-1`
 - [x] README with a diagram, how to run, metrics and a trace excerpt (ADR 0002 comes with stage 5)
 - [x] ADRs 0001 to 0003
-- [ ] Spec success criteria checked and every tag exists
+- [x] Spec success criteria checked and every tag exists
 
 ---
 
