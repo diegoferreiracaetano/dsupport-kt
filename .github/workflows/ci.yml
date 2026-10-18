@@ -2,7 +2,15 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -14,7 +22,24 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - name: Testes offline (JVM)
+      - name: Install libraries for the headless Compose render test
+        run: sudo apt-get update && sudo apt-get install -y libfontconfig1 libgl1
+      - name: Offline tests (JVM, every module)
         run: ./gradlew test
-      - name: Compila o código e os testes compartilhados para Wasm
+      - name: Compile the shared code and tests for Wasm
         run: ./gradlew :contract:wasmJsTestClasses :core:wasmJsTestClasses
+      - name: Build the runnable distributions
+        run: ./gradlew installDist
+      - name: Keep the test reports when something fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: "**/build/reports/tests"
+      - name: Keep the rendered screens of the app
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-render
+          path: app/build/render/*.png
+          if-no-files-found: ignore
