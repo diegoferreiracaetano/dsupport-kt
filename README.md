@@ -29,7 +29,7 @@ The full trace is in [docs/presentation/samples](docs/presentation/samples/first
 
 ## Architecture
 
-Modules, each depending only on the ones to its left (an arrow means "depends on"):
+Modules, each depending only on the ones to its right (an arrow means "depends on"):
 
 ```mermaid
 flowchart LR
@@ -104,7 +104,7 @@ Requirements: JDK 21 (the Gradle JVM is pinned in `gradle/gradle-daemon-jvm.prop
 ./gradlew test
 ```
 
-The 311 tests run offline, with no key.
+The 314 tests run offline, with no key.
 
 To talk to the real assistant, copy `.env.example` to `.env`, put your `ANTHROPIC_API_KEY` in it, and load it in the terminal (never commit it):
 

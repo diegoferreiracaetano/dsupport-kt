@@ -104,7 +104,7 @@ Requisitos: JDK 21 (a JVM do Gradle é fixada em `gradle/gradle-daemon-jvm.prope
 ./gradlew test
 ```
 
-Os 311 testes rodam offline, sem chave.
+Os 314 testes rodam offline, sem chave.
 
 Para conversar com o assistente de verdade, copie o `.env.example` para `.env`, coloque a sua `ANTHROPIC_API_KEY` nele e carregue no terminal (nunca faça commit dele):
 
