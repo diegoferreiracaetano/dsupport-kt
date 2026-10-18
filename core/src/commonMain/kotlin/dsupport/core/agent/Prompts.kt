@@ -14,7 +14,7 @@ val ORCHESTRATOR_PROMPT = """
     - If the order number or the email is missing for a question about a specific order, ask the customer
       before delegating. Asking for a missing detail is a complete answer.
     - If orders reports a delay, call escalation and tell the customer the ticket number.
-    - Write the final answer short and friendly, in English.
+    - Write the final answer short and friendly, in the language the customer wrote in (English or Portuguese).
 """.trimIndent()
 
 val KNOWLEDGE_PROMPT = """

@@ -126,4 +126,23 @@ class ChatViewModelTest {
 
         verify(exactly = 1) { assistant.ask(any()) }
     }
+
+    @Test
+    fun `given a new chat when reading the state then should start in Portuguese`() = runTest {
+        val viewModel = ChatViewModel(mockk<Assistant>(relaxed = true), this)
+
+        assertEquals(Language.PORTUGUESE, viewModel.state.value.language)
+    }
+
+    @Test
+    fun `given a chosen language when changing it then should expose it and keep the messages`() = runTest {
+        val viewModel = ChatViewModel(assistantStreaming(StreamItem.Event(completed)), this)
+        viewModel.send("oi")
+        advanceUntilIdle()
+
+        viewModel.changeLanguage(Language.ENGLISH)
+
+        assertEquals(Language.ENGLISH, viewModel.state.value.language)
+        assertEquals(2, viewModel.state.value.messages.size)
+    }
 }

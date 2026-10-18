@@ -37,7 +37,7 @@ class ChatScreenRenderTest {
     )
 
     private fun render(state: ChatState, name: String): Path {
-        val scene = ImageComposeScene(width = 1100, height = 720, density = Density(1f)) { ChatScreen(state) {} }
+        val scene = ImageComposeScene(width = 1100, height = 720, density = Density(1f)) { ChatScreen(state, {}) }
         val bytes = scene.render().encodeToData(EncodedImageFormat.PNG)!!.bytes
         scene.close()
         val file = Path.of("build", "render", "$name.png")
@@ -48,9 +48,18 @@ class ChatScreenRenderTest {
 
     @Test
     fun `given a finished conversation when rendering the screen then should draw an image`() {
-        val state = ChatState(messages = listOf(ChatMessage.Customer("My order 1001 is late"), reply))
+        val state = ChatState(messages = listOf(ChatMessage.Customer("Meu pedido 1001 atrasou"), reply))
 
         val file = render(state, "finished")
+
+        assertTrue(Files.size(file) > 5_000)
+    }
+
+    @Test
+    fun `given the English language when rendering the screen then should draw an image`() {
+        val state = ChatState(messages = listOf(ChatMessage.Customer("My order 1001 is late"), reply), language = Language.ENGLISH)
+
+        val file = render(state, "english")
 
         assertTrue(Files.size(file) > 5_000)
     }

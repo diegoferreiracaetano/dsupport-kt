@@ -21,12 +21,17 @@ data class ChatState(
     val messages: List<ChatMessage> = emptyList(),
     val running: Boolean = false,
     val liveEvents: List<AgentEvent> = emptyList(),
+    val language: Language = Language.PORTUGUESE,
 )
 
 /** Holds what the screen shows. One question runs at a time. */
 class ChatViewModel(private val assistant: Assistant, private val scope: CoroutineScope) {
     private val mutableState = MutableStateFlow(ChatState())
     val state: StateFlow<ChatState> = mutableState.asStateFlow()
+
+    fun changeLanguage(language: Language) {
+        mutableState.update { it.copy(language = language) }
+    }
 
     fun send(question: String) {
         val text = question.trim()

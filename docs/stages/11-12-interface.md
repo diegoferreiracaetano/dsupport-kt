@@ -19,6 +19,8 @@ app (Compose)  --POST /chat {"question": "..."}-->  server (Ktor)  -->  AnswerCu
 - **One protocol, two sides.** `ChatRequest`, the frames and `SseParser` live in `contract`, so the server and the app cannot drift apart, and it is tested once.
 - **The app is layered like the core.** `Assistant` is the port, `ChatClient` the adapter, `ChatViewModel` the state, `ChatScreen` the drawing. Everything but the drawing is tested with doubles; the drawing is checked by rendering it headlessly to a PNG.
 
+- **Language.** The screen has a PT/EN selector, Portuguese by default (`Strings`, `Language`). The assistant answers in the language the customer writes in; the orchestrator prompt says so. The trace stays in English, it is technical output.
+
 ## Run
 
 ```bash

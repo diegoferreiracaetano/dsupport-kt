@@ -19,6 +19,8 @@ app (Compose)  --POST /chat {"question": "..."}-->  servidor (Ktor)  -->  Answer
 - **Um protocolo, dois lados.** `ChatRequest`, os quadros e o `SseParser` vivem em `contract`, então servidor e app não se afastam, e é testado uma vez.
 - **O app tem camadas como o core.** `Assistant` é a porta, `ChatClient` o adapter, `ChatViewModel` o estado, `ChatScreen` o desenho. Tudo menos o desenho é testado com dublês; o desenho é conferido renderizando em PNG, sem janela.
 
+- **Idioma.** A tela tem um seletor PT/EN, português por padrão (`Strings`, `Language`). O assistente responde no idioma em que o cliente escreve; o prompt do orquestrador diz isso. O rastro continua em inglês, é saída técnica.
+
 ## Rodar
 
 ```bash

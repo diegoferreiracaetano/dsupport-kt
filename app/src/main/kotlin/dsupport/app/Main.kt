@@ -29,6 +29,6 @@ fun main() = application {
             ChatViewModel(ChatClient(http, baseUrl), scope)
         }
         val state by viewModel.state.collectAsState()
-        ChatScreen(state, viewModel::send)
+        ChatScreen(state, viewModel::send, viewModel::changeLanguage)
     }
 }
