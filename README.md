@@ -8,7 +8,7 @@
 
 <p align="center"><img src="docs/demo/demo.gif" alt="DSupport running on an iPhone" width="300"></p>
 
-The iOS app talking to the server, with the live trace. The video is sped up 2x: [docs/demo/demo.mp4](docs/demo/demo.mp4).
+The iOS app talking to the server, with the live trace. Sped up 2x.
 
 A multi-agent customer support assistant, built by hand in Kotlin Multiplatform, with no agent framework: an orchestrator delegates to specialists, answers only from sources, and hands the case to a human when it cannot answer safely. It is measured by an evaluation that runs on every change.
 
