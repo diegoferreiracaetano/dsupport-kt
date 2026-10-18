@@ -9,17 +9,23 @@ class EvalRunner(
     private val progress: (GoldenCase, CaseResult) -> Unit = { _, _ -> },
 ) {
 
-    suspend fun run(cases: List<GoldenCase>, only: Set<String> = emptySet()): List<CaseResult> =
-        cases.filter { only.isEmpty() || it.id in only }.map { case ->
-            val result = try {
-                val run = answerer.answer(case)
-                scorer.score(case, run.answer, run.evidence, run.events, run.elapsedMs)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                scorer.failed(case, e.message ?: e::class.simpleName.orEmpty())
+    /** With [repeat] above 1 every case runs that many times, and the attempts are numbered (`g04#1`, `g04#2`, ...). */
+    suspend fun run(cases: List<GoldenCase>, only: Set<String> = emptySet(), repeat: Int = 1): List<CaseResult> =
+        cases.filter { only.isEmpty() || it.id in only }.flatMap { case ->
+            (1..repeat).map { attempt ->
+                val result = attemptOf(case)
+                val numbered = if (repeat > 1) result.copy(id = "${case.id}#$attempt") else result
+                progress(case, numbered)
+                numbered
             }
-            progress(case, result)
-            result
         }
+
+    private suspend fun attemptOf(case: GoldenCase): CaseResult = try {
+        val run = answerer.answer(case)
+        scorer.score(case, run.answer, run.evidence, run.events, run.elapsedMs)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        scorer.failed(case, e.message ?: e::class.simpleName.orEmpty())
+    }
 }

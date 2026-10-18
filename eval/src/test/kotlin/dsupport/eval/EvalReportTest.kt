@@ -126,6 +126,15 @@ class EvalReportTest {
     }
 
     @Test
+    fun `given two cases escalated by code out of five when reporting then should compute a review fallback rate of 40 percent`() {
+        val results = List(5) { result("c$it").copy(codeEscalated = it < 2) }
+        val report = EvalReport(results)
+
+        assertEquals(0.4, report.reviewFallback)
+        assertTrue("| Review fallback (escalated by code) | 40% |" in report.toMarkdown("Report"))
+    }
+
+    @Test
     fun `given a metric with no data when rendering the markdown then should show n slash a`() {
         val markdown = EvalReport(listOf(result(escalated = true, shouldEscalate = null))).toMarkdown("Report")
 

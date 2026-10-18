@@ -24,6 +24,12 @@ suspend fun main(args: Array<String>) {
         System.err.println(e.message)
         exitProcess(1)
     }
+    val arguments = try {
+        EvalArgumentsParser().parse(args)
+    } catch (e: IllegalArgumentException) {
+        System.err.println("${e.message}\nUsage: ./gradlew :eval:run --args=\"[case ids] [--repeat=N]\"")
+        exitProcess(1)
+    }
     val cases = GoldenDatasetLoader().load(settings.dataDir.resolve("golden.json"))
     val http = HttpClient(CIO) { install(HttpTimeout) { requestTimeoutMillis = REQUEST_TIMEOUT_MS } }
     try {
@@ -32,11 +38,11 @@ suspend fun main(args: Array<String>) {
             AssemblyCaseAnswerer(DSupportRuntime(settings, http), Files.createTempDirectory("dsupport-eval")),
         ) { case, result -> println(progress.format(case, result)) }
 
-        val results = runner.run(cases, only = args.toSet())
+        val results = runner.run(cases, only = arguments.caseIds, repeat = arguments.repeat)
 
         val now = java.time.LocalDateTime.now()
         val markdown = EvalReport(results).toMarkdown(
-            "Evaluation ${now.toLocalDate()} (${settings.modelId}, reference date $EVAL_REFERENCE_DATE)",
+            "Evaluation ${now.toLocalDate()} (${settings.modelId}, reference date $EVAL_REFERENCE_DATE, ${arguments.repeat} run(s) per case)",
         )
         val report = Path.of("reports", "eval-${now.format(REPORT_STAMP)}.md")
         Files.createDirectories(report.parent)

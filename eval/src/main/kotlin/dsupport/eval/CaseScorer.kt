@@ -33,6 +33,7 @@ class CaseScorer(private val validator: SupportAnswerValidator = SupportAnswerVa
             intent = answer.intent,
             answer = excerpt(answer.answer),
             reviewTrail = reviewTrailOf(events),
+            codeEscalated = events.any { it is AgentEvent.Escalated },
         )
     }
 

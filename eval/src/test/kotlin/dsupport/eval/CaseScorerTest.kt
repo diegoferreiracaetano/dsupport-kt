@@ -167,6 +167,18 @@ class CaseScorerTest {
     }
 
     @Test
+    fun `given an escalation by code in the events when scoring then should mark the review fallback`() {
+        val events = listOf(AgentEvent.Escalated("TCK-1002", "review limit reached"))
+
+        assertTrue(score(case(), answer(), events).codeEscalated)
+    }
+
+    @Test
+    fun `given no escalation by code in the events when scoring then should not mark the review fallback`() {
+        assertFalse(score(case(), answer()).codeEscalated)
+    }
+
+    @Test
     fun `given a perfect answer when scoring then should have no misses`() {
         assertEquals(emptyList(), score(case(), answer()).misses)
     }

@@ -20,4 +20,5 @@ data class CaseResult(
     val intent: String = "",
     val answer: String = "",
     val reviewTrail: List<String> = emptyList(),
+    val codeEscalated: Boolean = false,
 )

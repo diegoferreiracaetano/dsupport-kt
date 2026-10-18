@@ -76,6 +76,36 @@ class EvalRunnerTest {
     }
 
     @Test
+    fun `given a repeat of three when running then should run each case three times and number the attempts`() = runTest {
+        coEvery { answerer.answer(any()) } returns run()
+
+        val results = runner.run(listOf(case("g1"), case("g2")), repeat = 3)
+
+        assertEquals(listOf("g1#1", "g1#2", "g1#3", "g2#1", "g2#2", "g2#3"), results.map { it.id })
+        coVerify(exactly = 6) { answerer.answer(any()) }
+    }
+
+    @Test
+    fun `given a single run when running then should keep the plain case ids`() = runTest {
+        coEvery { answerer.answer(any()) } returns run()
+
+        assertEquals(listOf("g1"), runner.run(listOf(case("g1")), repeat = 1).map { it.id })
+    }
+
+    @Test
+    fun `given a repeat and a failing attempt when running then should fail only that attempt`() = runTest {
+        var calls = 0
+        coEvery { answerer.answer(any()) } answers {
+            calls++
+            if (calls == 2) throw IllegalStateException("API responded 500") else run()
+        }
+
+        val results = runner.run(listOf(case("g1")), repeat = 3)
+
+        assertEquals(listOf(null, "API responded 500", null), results.map { it.error })
+    }
+
+    @Test
     fun `given no cases when running then should return no results`() = runTest {
         assertEquals(emptyList(), runner.run(emptyList()))
     }

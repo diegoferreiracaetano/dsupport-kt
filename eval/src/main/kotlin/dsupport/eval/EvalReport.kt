@@ -10,6 +10,7 @@ class EvalReport(private val results: List<CaseResult>) {
     val facts: Double? = rate(results) { it.factsOk }
     val sources: Double? = rate(results.filter { it.sourcesOk != null }) { it.sourcesOk == true }
     val leakFree: Double? = rate(results) { it.leakFree }
+    val reviewFallback: Double? = rate(results) { it.codeEscalated }
 
     private val judged = results.filter { it.shouldEscalate != null }
     private val truePositives = judged.count { it.escalated && it.shouldEscalate == true }
@@ -40,6 +41,7 @@ class EvalReport(private val results: List<CaseResult>) {
         appendLine("| No forbidden content (leaks) | ${percent(leakFree)} |")
         appendLine("| Escalation precision | ${percent(escalationPrecision)} |")
         appendLine("| Escalation recall | ${percent(escalationRecall)} |")
+        appendLine("| Review fallback (escalated by code) | ${percent(reviewFallback)} |")
         appendLine("| Average latency | $averageLatencyMs ms |")
         appendLine("| Model calls per case | ${String.format(Locale.US, "%.1f", averageModelCalls)} |")
         appendLine("| Tokens per case | $averageTokens |")
