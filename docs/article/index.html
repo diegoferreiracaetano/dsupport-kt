@@ -1,35 +1,55 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Multi-agent systems in practice</title><style>
-:root{--bg:#f6f6f3;--card:#fff;--fg:#18181b;--muted:#5b5b63;--line:#e4e4e0;--accent:#1f5eff;--code:#0f1115}
-@media (prefers-color-scheme:dark){:root{--bg:#0e0f12;--card:#16181d;--fg:#ededef;--muted:#9b9ca6;--line:#2a2d35;--accent:#6b93ff}}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--fg);font:18px/1.75 Georgia,"Times New Roman",serif}
-header.top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--line);font:600 15px system-ui}
-button{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:7px 14px;font:600 14px system-ui;cursor:pointer}
-main{max-width:760px;margin:0 auto;padding:8px 18px 90px}
-h1{font:700 clamp(32px,6vw,50px)/1.08 system-ui;letter-spacing:-.04em;margin:34px 0 18px}h2{font:700 30px/1.2 system-ui;letter-spacing:-.03em;margin:44px 0 10px}h3{font:700 22px/1.3 system-ui;margin:36px 0 6px;color:var(--accent)}
-figure{margin:20px -40px}figure img,p img{width:100%;height:auto;border-radius:20px;display:block}@media(max-width:860px){figure{margin:20px 0}}
-p{margin:12px 0}hr{border:0;border-top:1px solid var(--line);margin:34px 0}
-blockquote{margin:18px 0;padding:14px 20px;border-radius:16px;font:16px/1.6 system-ui;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--muted)}
-blockquote.warn{background:#fff1d6;border-color:#f0c36d;border-left-color:#c76a00;color:#4a2c00}blockquote.tip{background:#e2f5ea;border-color:#9bd6b3;border-left-color:#0f8f7d;color:#0b3d2a}blockquote.ok{background:#e6edff;border-color:#a9c0ff;border-left-color:#1f5eff;color:#10265c}
-@media (prefers-color-scheme:dark){blockquote.warn{background:#3a2a10;border-color:#6b4b14;color:#f6dca8}blockquote.tip{background:#112a1d;border-color:#1f5a3a;color:#bfe9d1}blockquote.ok{background:#1b2744;border-color:#2c4180;color:#c8d6ff}}
-pre{background:var(--code);color:#e8eaed;border-radius:16px;padding:18px 20px;overflow:auto;font:14px/1.55 ui-monospace,"SF Mono",Menlo,monospace}code{font-family:ui-monospace,Menlo,monospace;font-size:.88em}p code,li code{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1px 6px}pre code{background:none;border:0;padding:0}
-table{border-collapse:collapse;width:100%;font:16px system-ui;margin:16px 0}td,th{border-bottom:1px solid var(--line);padding:9px;text-align:left}a{color:var(--accent)}
-.pt{display:none}body.pt .pt{display:block}body.pt .en{display:none}</style></head><body><header class="top"><span>DSupport</span><button id="t">PT / EN</button></header><main><div class="en"><h1>Your "AI agent" is mostly if statements (and that is the point)</h1>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#18181b;--muted:#63636b;--line:#e2e2dc;--accent:#1f5eff;--accent-soft:#e6edff;--warn:#9a5b00;--warn-soft:#fff1d6;--code:#f0f0ec;--user:#e9e9e3;--good:#0b6b3a;--good-soft:#e2f5ea;--bad:#a1281d;--bad-soft:#fdeceb}
+@media (prefers-color-scheme:dark){:root{--bg:#0e0f12;--card:#16181d;--fg:#ededef;--muted:#9b9ca6;--line:#2a2d35;--accent:#6b93ff;--accent-soft:#1b2744;--warn:#f2b258;--warn-soft:#3a2a10;--code:#101216;--user:#242830;--good:#6fd39b;--good-soft:#112a1d;--bad:#ff8a7a;--bad-soft:#3b1814}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.7 system-ui,-apple-system,"Segoe UI",sans-serif}
+header.top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+button{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+main{max-width:880px;margin:0 auto;padding:0 16px 80px}
+.cover{background:linear-gradient(135deg,var(--accent-soft),var(--card));border:1px solid var(--line);border-radius:12px;padding:36px 28px;margin:24px 0 18px;color:var(--accent)}
+.cover h1{color:var(--fg);font-size:clamp(34px,7vw,58px);letter-spacing:-.04em;margin:6px 0 8px;line-height:1.05}.kicker{font-size:13px;font-weight:600}.lead{font-size:20px;color:var(--muted);margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.chips span{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:5px 12px;font-size:13px;font-weight:500;color:var(--fg)}
+.cover-svg{width:100%;height:auto;margin-top:20px;color:var(--fg)}.agent{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}.tool{fill:var(--card);stroke:var(--line);stroke-width:1.5}.human{fill:var(--user)}.human2{fill:var(--warn-soft);stroke:var(--warn)}.t-md{font:600 15px system-ui;fill:var(--fg)}.t-sm{font:500 13px ui-monospace,monospace;fill:var(--fg)}.t-tag{font:600 12px system-ui;fill:var(--accent)}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}.toc a{font-size:13px;text-decoration:none;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 10px}
+.arch,.step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:26px;margin:22px 0}
+.step header{display:flex;gap:16px;align-items:flex-start;margin-bottom:6px}.num{min-width:54px;height:54px;border-radius:12px;background:var(--accent);color:#fff;font-weight:600;font-size:20px;display:flex;align-items:center;justify-content:center}
+h2{margin:0;font-size:23px;letter-spacing:-.02em;line-height:1.25}h3{margin:22px 0 4px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.sub{margin:2px 0 0;color:var(--muted)}p{margin:6px 0}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}.vs>div{border-radius:12px;padding:12px 16px}.bad{background:var(--bad-soft);color:var(--bad)}.good{background:var(--good-soft);color:var(--good)}.vs p{color:var(--fg)}
+.callout{border-radius:12px;padding:12px 16px;margin:12px 0}.callout.concept{background:var(--accent-soft);border-left:4px solid var(--accent)}.callout.warn{background:var(--warn-soft);border-left:4px solid var(--warn)}.callout.real{background:var(--code);border-left:4px solid var(--muted)}
+.diagram{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px;margin:8px 0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}.arrow,.down{color:var(--muted);font-size:20px}
+.node{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:12px;font-size:14px;font-weight:500;border:1px solid transparent}.ic{width:17px;height:17px;fill:currentColor;flex:none}
+.node.model{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}.node.code{background:var(--card);border-color:var(--line)}.node.human{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}.node.user{background:var(--user)}
+ol{padding-left:22px}li{margin:4px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}.analogy{background:var(--bg);border-radius:12px;padding:12px 16px;margin:12px 0}.analogy p{font-style:italic}
+@media(max-width:700px){.two,.vs{grid-template-columns:1fr}.step header{flex-direction:column}}
+details{margin-top:12px}summary{cursor:pointer;color:var(--accent);font-weight:500}
+pre{background:var(--code);border-radius:12px;padding:14px;overflow:auto;font:13px/1.5 ui-monospace,"SF Mono",monospace;margin:8px 0}pre.mini{margin:0;font-size:12px}pre.cmd{border-left:4px solid var(--accent)}code{font-family:ui-monospace,monospace;font-size:13px;color:var(--muted)}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid var(--line);padding:8px;text-align:left}
+.shots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}.shots img{width:100%;border-radius:12px;border:1px solid var(--line)}figure{margin:0}figcaption{font-size:13px;color:var(--muted);text-align:center}@media(max-width:700px){.shots{grid-template-columns:1fr}}
+.tl{display:flex;gap:12px;margin:12px 0}.tn{min-width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:2px}.tl p{margin:4px 0 0;color:var(--muted);font-size:15px}.tl>div{min-width:0;flex:1}
+.gloss{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}.g{display:flex;flex-direction:column;border-bottom:1px solid var(--line);padding:6px 0}.g span{color:var(--muted);font-size:15px}@media(max-width:700px){.gloss{grid-template-columns:1fr}}
+.pt{display:none}body.pt .pt{display:inline}body.pt .en{display:none}body.pt p .pt,body.pt li .pt{display:inline}</style></head><body><header class="top"><span>DSupport</span><button id="t">PT / EN</button></header><main><div class="en"><h1>Your "AI agent" is mostly if statements (and that is the point)</h1>
 <figure><img src="medium/img/en/cover.png" alt="Cover"></figure>
 <blockquote class="note"><strong>Title options for Medium (pick one)</strong><br>1. <em>Provocative:</em> "Your 'AI agent' is mostly if statements (and that is the point)"<br>2. <em>Career:</em> "I built a multi-agent AI assistant without a framework. Here is what it taught me."<br>3. <em>Best practices:</em> "RAG, MCP and multi-agent in practice: where the model belongs and where plain code must win"</blockquote>
-<p>Everyone is talking about AI. RAG. MCP. Multi-agent. Guardrails. Evals.</p>
-<p>Slides are full of them. Almost nobody shows what they are <strong>in practice</strong>.</p>
+<blockquote class="warn"><strong>⚠️ Opening provocation</strong><br>The market is flooded with buzzwords: RAG, MCP, multi-agent architecture, guardrails. Every day a new framework promises "autonomous agents in two lines".<br>What happens when a demo agent meets a real support desk? It invents policies, ignores business rules and leaks data.<br>Enough <em>vibes-based engineering</em>.</blockquote>
 <p>So I built one from scratch in Kotlin, with no framework, and measured it. No jargon wall: first the ideas in plain words, then the code for the curious.</p>
 <figure><img src="medium/img/en/terms.png" alt="The buzzwords in plain words"></figure>
-<blockquote class="warn"><strong>⚠️ The uncomfortable question</strong><br>If a rule can be written as code, should a model be anywhere near it?<br>Spoiler: in this project, five roles use a model and <strong>fourteen pieces are plain code</strong>.</blockquote>
 <hr>
-<h2>The project: DSupport</h2>
-<p>A support assistant. A customer writes:</p>
-<blockquote class="note">"My order 1042 has not arrived. My email is ana@example.com"</blockquote>
-<figure><img src="medium/img/en/story.png" alt="From a question to an answer"></figure>
-<p>It must answer <strong>only from sources</strong>, <strong>never invent</strong> a ticket number, <strong>hand the case to a human</strong> when unsure, and be <strong>measured</strong>, not admired.</p>
-<p>Repository: <a href="https://github.com/diegoferreiracaetano/dsupport-kt">github.com/diegoferreiracaetano/dsupport-kt</a></p>
-<hr>
-<h2>Worth it? Deterministic vs agent</h2>
+<h2>1️⃣ The big illusion of "everything is an LLM": deterministic vs non-deterministic</h2>
+<p>There is an illusion that the language model should decide 100% of a piece of software. But an LLM is a <strong>probabilistic</strong> engine. Asking it, by prompt, to never print a credit card in a log is Russian roulette.</p>
+<pre><code>+-----------------------------------------------------------------------+
+|                        HYBRID SYSTEM (DSupport)                        |
++------------------------------------+----------------------------------+
+|  Model (non-deterministic)         |  Code (deterministic)            |
++------------------------------------+----------------------------------+
+|  - understand natural language     |  - validate types and rules      |
+|  - decide which tool to call       |  - hide sensitive data           |
+|  - draft the reply                 |  - block what must not pass      |
+|  - route between specialists       |  - tests that run offline        |
++------------------------------------+----------------------------------+</code></pre>
+<p><strong>Three ways to build it:</strong></p>
+<p><strong>1 · Only deterministic (<code>if/else</code>, state machines).</strong> It does not hallucinate, but it does not understand paraphrase and the rule list grows forever.<br><strong>2 · Only a model ("autonomous agent").</strong> It promises everything and delivers unpredictable answers, endless loops and runaway cost.<br><strong>3 · Hybrid (DSupport).</strong> The model understands and picks tools. The code validates, blocks and tests.</p>
+<blockquote class="warn"><strong>⚠️ Alert</strong><br>Relying on the prompt alone fails in production. A prompt is a suggestion, not a guarantee. A prompt injection or a stochastic variation breaks the rule.</blockquote>
 <p>Be honest: a deterministic version is the first thing you should try. Here is what it looks like.</p>
 <pre><code>// A deterministic support router (illustration, not in the repo)
 fun route(message: String): Intent = when {
@@ -46,11 +66,16 @@ fun route(message: String): Intent = when {
 <h3>The decision, as five blocks</h3>
 <p><strong>1 · Closed input, known rules?</strong> Use code. Do not pay for a model to read a status enum.<br><strong>2 · Open language, many phrasings?</strong> Use a model to understand it.<br><strong>3 · Cannot be wrong (money, identity, permissions)?</strong> The model <strong>proposes</strong>, code <strong>decides</strong>.<br><strong>4 · Must be auditable?</strong> Code, or a model whose output code validates.<br><strong>5 · Tiny cost or latency budget?</strong> Code.</p>
 <h3>Where the model is, and where code is</h3>
-<figure><img src="medium/img/en/where-ai.png" alt="Where the model is"></figure>
 <p>Five roles use a model: the orchestrator and the three specialists, plus the reviewer. Fourteen pieces are plain code: <code>IdentityGate</code>, <code>Redaction</code>, <code>RedactResults</code>, <code>MentionTicket</code>, <code>TicketDedup</code>, <code>GuardPolicy</code>, <code>SupportAnswerValidator</code>, the review limit and escalation, <code>MarkdownChunker</code>, the TF-IDF search, the four tools, the MCP client and servers, <code>TraceReport</code> and the eval scorer.</p>
 <blockquote class="tip"><strong>💡 Takeaway</strong><br>Use the model at the <strong>edges</strong> (understanding language, writing the reply). Keep the <strong>middle</strong> deterministic.</blockquote>
 <hr>
-<h2>How the project is separated</h2>
+<hr>
+<h2>2️⃣ The project and the architecture: clean separation of responsibilities</h2>
+<p>A support assistant. A customer writes:</p>
+<blockquote class="note">"My order 1042 has not arrived. My email is ana@example.com"</blockquote>
+<figure><img src="medium/img/en/story.png" alt="From a question to an answer"></figure>
+<p>It must answer <strong>only from sources</strong>, <strong>never invent</strong> a ticket number, <strong>hand the case to a human</strong> when unsure, and be <strong>measured</strong>, not admired.</p>
+<p>Repository: <a href="https://github.com/diegoferreiracaetano/dsupport-kt">github.com/diegoferreiracaetano/dsupport-kt</a></p>
 <pre><code>dsupport-kt/
 ├── contract/      shared vocabulary: events, answer          (Kotlin Multiplatform)
 ├── core/          ports, agent loop, guards, review, use case (Kotlin Multiplatform)
@@ -63,10 +88,13 @@ fun route(message: String): Intent = when {
 ├── app/           Compose app (desktop and iOS)
 ├── config/        agents.json, mcp-servers.json
 └── data/          orders, golden dataset, help-center articles</code></pre>
-<p><strong>1 · <code>contract</code></strong> is the vocabulary. <strong>2 · <code>core</code></strong> is the rules. <strong>3 · <code>adapters</code></strong> is the outside world. <strong>4 · everything else</strong> is an entry point.</p>
 <blockquote class="ok"><strong>✅ Rule of thumb</strong><br>Dependencies point <strong>inward</strong>. The core defines ports (interfaces). Adapters at the edge implement them. The core never imports a provider.</blockquote>
 <hr>
-<h2>Step by step, with code</h2>
+<figure><img src="medium/img/en/modules.png" alt="Module dependencies"></figure>
+<p><strong>How the modules are separated</strong></p>
+<p><strong>1 · <code>contract</code></strong>: the shared types (<code>SupportAnswer</code>, <code>AgentEvent</code>). No dependencies, ready for Kotlin Multiplatform.<br><strong>2 · <code>core</code></strong>: the heart. Agent loop, orchestration, guardrails and the <strong>ports</strong> (interfaces). It does not know what HTTP, Anthropic or JSON is.<br><strong>3 · <code>adapters</code></strong>: implement the ports. Anthropic client, RAG, files, MCP client. Swapping Claude for another model is writing a new adapter, without touching <code>core</code>.<br><strong>4 · <code>mcp-orders</code> and <code>mcp-tickets</code></strong>: independent servers that speak MCP.<br><strong>5 · <code>cli</code>, <code>server</code>, <code>app</code></strong>: entry points (terminal, Ktor API with SSE, Compose app).<br><strong>6 · <code>eval</code></strong>: the evaluation suite with a golden dataset.</p>
+<hr>
+<h2>3️⃣ The concepts in practice (from theory to code)</h2>
 <h3>01 · Agent loop: the model decides, your code acts</h3>
 <figure><img src="medium/img/en/panel-1.png" alt=""></figure>
 <p>A model only produces text. The loop lets it ask for help, read the result and try again.</p>
@@ -216,7 +244,6 @@ override suspend fun beforeTool(agent: String, tool: ToolSpec, args: JsonObject)
 <h3>11 · Evals: an exam with an answer key</h3>
 <figure><img src="medium/img/en/panel-9-2.png" alt=""></figure>
 <p>15 golden cases, each run 3 times, because the same code gave different results.</p>
-<table><tr><th>Metric</th><th>First run</th><th>After fixes</th></tr><tr><td>Expected facts present</td><td>93%</td><td>100%</td></tr><tr><td>Expected sources cited</td><td>86%</td><td>100%</td></tr><tr><td>Escalation precision</td><td>80%</td><td>100%</td></tr><tr><td>Review fallback</td><td>9%</td><td>0%</td></tr></table>
 <p>The evals found what code review never would: two rules that contradicted each other, a reviewer that invented objections, and a routing error that repeated every time. About 30 cents, one afternoon.</p>
 <h3>12 · Server and app</h3>
 <figure><img src="medium/img/en/panel-11.png" alt=""></figure>
@@ -232,6 +259,25 @@ post(&quot;/chat&quot;) {
     }
 }</code></pre>
 <p>The API key lives only on the server. The Compose app draws the conversation, the sources, an escalation badge and the live trace.</p>
+<hr>
+<hr>
+<h2>4️⃣ Anatomy of a real run</h2>
+<p>The customer writes: <code>"My order 1042 has not arrived. My email is ana@example.com"</code>.</p>
+<figure><img src="medium/img/en/where-ai.png" alt="Where the model is and where code is"></figure>
+<p>This is the real terminal trace (shortened):</p>
+<pre><code>[orchestrator] calls orders {&quot;task&quot;:&quot;Check the status, tracking and delivery progress...&quot;}
+[orders] calls get_order_status {&quot;order_id&quot;:&quot;1042&quot;,&quot;email&quot;:&quot;ana@example.com&quot;}
+[orders] calls track_shipment   {&quot;order_id&quot;:&quot;1042&quot;,&quot;email&quot;:&quot;ana@example.com&quot;}   &lt;- in parallel
+[orders] get_order_status finished in 12 ms: {&quot;ok&quot;:true,&quot;status&quot;:&quot;in_transit&quot;,&quot;late&quot;:true,&quot;days_late&quot;:10}
+[orchestrator] calls escalation {&quot;task&quot;:&quot;Delayed order. Order number: 1042 ...&quot;}
+[escalation] create_ticket finished in 17 ms: {&quot;ok&quot;:true,&quot;ticket_id&quot;:&quot;TCK-1001&quot;}
+review round 1: rejected (4 problems)
+review round 2: approved</code></pre>
+<blockquote class="tip"><strong>💡 Efficiency and cost</strong><br>12 model calls, about 15 thousand input tokens and 2 thousand output tokens. Cost: <strong>US$ 0.0025</strong> (a quarter of a cent) with <code>claude-haiku-5-5</code>.</blockquote>
+<hr>
+<h2>5️⃣ Evals: how to prove the agent works</h2>
+<p>If you do not measure the agent, you only have opinions. <code>eval</code> runs a golden dataset of 15 cases, 3 times each, on every change.</p>
+<table><tr><th>Metric</th><th>Before</th><th>After</th><th>What it means in practice</th></tr><tr><td>Routing accuracy</td><td>100%</td><td>100%</td><td>The orchestrator sends the question to the right specialist</td></tr><tr><td>Groundedness</td><td>100%</td><td>100%</td><td>No answer invents facts outside the sources</td></tr><tr><td>No leaks</td><td>100%</td><td>100%</td><td>Customer data does not show up where it should not</td></tr><tr><td>Expected facts</td><td>93%</td><td>100%</td><td>The vital information was delivered</td></tr><tr><td>Cited sources</td><td>86%</td><td>100%</td><td>You can see where the answer came from</td></tr><tr><td>Escalation precision</td><td>80%</td><td>100%</td><td>Hands over to a human at the right time</td></tr><tr><td>Fallback after failed review</td><td>9%</td><td>0%</td><td>Answers refined without hitting the limit</td></tr></table>
 <hr>
 <h2>Tests and containerization</h2>
 <p>One test class per production class. Doubles at the ports. <strong>Zero API calls.</strong></p>
@@ -259,29 +305,39 @@ ENV DATA_DIR=data
 EXPOSE 8080
 CMD [&quot;bin/server&quot;]</code></pre>
 <hr>
+<hr>
 <h2>The price of "multi"</h2>
 <blockquote class="warn"><strong>⚠️ Alert</strong><br>One delayed-order question cost <strong>12 model calls</strong>, about 15,000 input tokens and 10 seconds. Multi-agent is not free.</blockquote>
 <p>Use one agent with tools when the task is small. Split into specialists only when prompts and toolsets grow and the roles are clearly different.</p>
-<h2>Conclusion</h2>
+<h2>🏁 Provocative conclusion</h2>
+<p>Software engineering did not change just because we now use AI. Agents without <strong>strong typing</strong>, <strong>clean architecture</strong>, <strong>guardrails in code</strong> and <strong>automated evaluation</strong> are unpredictable toys.</p>
+<p>The innovation is not the framework of the week. It is knowing <strong>where to use the model's non-determinism</strong> and <strong>where to use the determinism of code</strong>.</p>
+<hr>
+<h3>Conclusion</h3>
 <p>The model decides. Your code acts, validates and escalates. Rules live in code. Quality is measured. Providers are replaceable.</p>
 <p><strong>Your turn</strong></p>
 <p><strong>1</strong> · Which rule in your own project could be code instead of a prompt? Tell me in the comments.<br><strong>2</strong> · Disagree that most of an agent should be deterministic? I want to hear the counter-example.<br><strong>3</strong> · Share this with someone about to build "an AI agent". A star on the repo helps: <a href="https://github.com/diegoferreiracaetano/dsupport-kt">github.com/diegoferreiracaetano/dsupport-kt</a></p></div><div class="pt"><h1>Seu "agente de IA" é quase todo if (e é isso que importa)</h1>
 <figure><img src="medium/img/pt/cover.png" alt="Capa"></figure>
 <blockquote class="note"><strong>Opções de título para o Medium (escolha uma)</strong><br>1. <em>Provocativo:</em> "Seu 'agente de IA' é quase todo if (e é isso que importa)"<br>2. <em>Carreira:</em> "Construí um assistente de IA multiagente sem framework. Eis o que aprendi."<br>3. <em>Boas práticas:</em> "RAG, MCP e multiagente na prática: onde o modelo entra e onde o código comum tem que vencer"</blockquote>
-<p>Todo mundo fala de IA. RAG. MCP. Multiagente. Guardrails. Evals.</p>
-<p>Os slides estão cheios deles. Quase ninguém mostra o que eles são <strong>na prática</strong>.</p>
+<blockquote class="warn"><strong>⚠️ Provocação inicial</strong><br>O mercado foi inundado de <em>buzzwords</em>: RAG, MCP, arquitetura multiagente, guardrails. Todo dia surge um framework prometendo "agentes autônomos em duas linhas".<br>Mas o que acontece quando um agente de demo encontra um suporte ao cliente de verdade? Ele inventa políticas, ignora regras de negócio e vaza dados.<br>Chega de <em>vibes-based engineering</em>.</blockquote>
 <p>Então construí um do zero em Kotlin, sem framework, e medi. Sem paredão de jargão: primeiro as ideias em palavras simples, depois o código para os curiosos.</p>
 <figure><img src="medium/img/pt/terms.png" alt="Os termos da moda em palavras simples"></figure>
-<blockquote class="warn"><strong>⚠️ A pergunta desconfortável</strong><br>Se uma regra pode ser escrita como código, um modelo deveria chegar perto dela?<br>Spoiler: neste projeto, cinco papéis usam um modelo e <strong>catorze peças são código comum</strong>.</blockquote>
 <hr>
-<h2>O projeto: DSupport</h2>
-<p>Um assistente de suporte. Um cliente escreve:</p>
-<blockquote class="note">"My order 1042 has not arrived. My email is ana@example.com"</blockquote>
-<figure><img src="medium/img/pt/story.png" alt="De uma pergunta a uma resposta"></figure>
-<p>Ele precisa responder <strong>só com fontes</strong>, <strong>nunca inventar</strong> um número de ticket, <strong>passar o caso a um humano</strong> na dúvida e ser <strong>medido</strong>, não admirado.</p>
-<p>Repositório: <a href="https://github.com/diegoferreiracaetano/dsupport-kt">github.com/diegoferreiracaetano/dsupport-kt</a></p>
-<hr>
-<h2>Vale a pena? Determinístico vs agente</h2>
+<h2>1️⃣ A grande ilusão do "tudo é LLM": determinístico vs não-determinístico</h2>
+<p>Existe a ilusão de que o modelo de linguagem deve decidir 100% do software. Mas um LLM é um motor <strong>probabilístico</strong>. Pedir a ele, por prompt, que nunca mostre um cartão de crédito no log é roleta-russa.</p>
+<pre><code>+-----------------------------------------------------------------------+
+|                       SISTEMA HÍBRIDO (DSupport)                       |
++------------------------------------+----------------------------------+
+|  Modelo (não-determinístico)       |  Código (determinístico)         |
++------------------------------------+----------------------------------+
+|  - entender linguagem natural      |  - validar tipos e regras        |
+|  - decidir qual ferramenta chamar  |  - ocultar dados sensíveis       |
+|  - rascunhar a resposta            |  - barrar o que não pode passar  |
+|  - rotear entre especialistas      |  - testes que rodam offline      |
++------------------------------------+----------------------------------+</code></pre>
+<p><strong>Três jeitos de construir isso:</strong></p>
+<p><strong>1 · Só determinístico (<code>if/else</code>, máquinas de estado).</strong> Não alucina, mas não entende paráfrase e a lista de regras cresce para sempre.<br><strong>2 · Só modelo ("agente autônomo").</strong> Promete tudo, entrega respostas imprevisíveis, laços infinitos e custo fora de controle.<br><strong>3 · Híbrido (o DSupport).</strong> O modelo entende e escolhe ferramentas. O código valida, barra e testa.</p>
+<blockquote class="warn"><strong>⚠️ Alerta</strong><br>Depender só do prompt falha em produção. Prompt é sugestão, não garantia. Uma injeção de prompt ou uma variação estocástica quebra a regra.</blockquote>
 <p>Sendo honesto: uma versão determinística é a primeira coisa que você deve tentar. Veja como ela fica.</p>
 <pre><code>// Um roteador de suporte determinístico (ilustração, não está no repositório)
 fun route(message: String): Intent = when {
@@ -298,11 +354,16 @@ fun route(message: String): Intent = when {
 <h3>A decisão, em cinco blocos</h3>
 <p><strong>1 · Entrada fechada, regras conhecidas?</strong> Use código. Não pague um modelo para ler um enum de status.<br><strong>2 · Linguagem aberta, muitas formas de dizer?</strong> Use um modelo para entender.<br><strong>3 · Não pode errar (dinheiro, identidade, permissões)?</strong> O modelo <strong>propõe</strong>, o código <strong>decide</strong>.<br><strong>4 · Precisa ser auditável?</strong> Código, ou um modelo cuja saída o código valida.<br><strong>5 · Orçamento mínimo de custo ou latência?</strong> Código.</p>
 <h3>Onde está o modelo e onde está o código</h3>
-<figure><img src="medium/img/pt/where-ai.png" alt="Onde está o modelo"></figure>
 <p>Cinco papéis usam um modelo: o orquestrador e os três especialistas, mais o revisor. Catorze peças são código comum: <code>IdentityGate</code>, <code>Redaction</code>, <code>RedactResults</code>, <code>MentionTicket</code>, <code>TicketDedup</code>, <code>GuardPolicy</code>, <code>SupportAnswerValidator</code>, o limite da revisão e o escalonamento, <code>MarkdownChunker</code>, a busca TF-IDF, as quatro ferramentas, o cliente e os servidores MCP, <code>TraceReport</code> e o pontuador dos evals.</p>
 <blockquote class="tip"><strong>💡 Conclusão</strong><br>Use o modelo nas <strong>bordas</strong> (entender a linguagem, escrever a resposta). Mantenha o <strong>meio</strong> determinístico.</blockquote>
 <hr>
-<h2>Como o projeto é separado</h2>
+<hr>
+<h2>2️⃣ O projeto e a arquitetura: separação limpa de responsabilidades</h2>
+<p>Um assistente de suporte. Um cliente escreve:</p>
+<blockquote class="note">"My order 1042 has not arrived. My email is ana@example.com"</blockquote>
+<figure><img src="medium/img/pt/story.png" alt="De uma pergunta a uma resposta"></figure>
+<p>Ele precisa responder <strong>só com fontes</strong>, <strong>nunca inventar</strong> um número de ticket, <strong>passar o caso a um humano</strong> na dúvida e ser <strong>medido</strong>, não admirado.</p>
+<p>Repositório: <a href="https://github.com/diegoferreiracaetano/dsupport-kt">github.com/diegoferreiracaetano/dsupport-kt</a></p>
 <pre><code>dsupport-kt/
 ├── contract/      vocabulário compartilhado: eventos, resposta   (Kotlin Multiplatform)
 ├── core/          portas, agent loop, guards, revisão, caso de uso (Kotlin Multiplatform)
@@ -315,10 +376,13 @@ fun route(message: String): Intent = when {
 ├── app/           app Compose (desktop e iOS)
 ├── config/        agents.json, mcp-servers.json
 └── data/          pedidos, golden dataset, artigos da central de ajuda</code></pre>
-<p><strong>1 · <code>contract</code></strong> é o vocabulário. <strong>2 · <code>core</code></strong> são as regras. <strong>3 · <code>adapters</code></strong> é o mundo de fora. <strong>4 · o resto</strong> são pontos de entrada.</p>
 <blockquote class="ok"><strong>✅ Regra de bolso</strong><br>As dependências apontam <strong>para dentro</strong>. O core define portas (interfaces). Adapters na borda as implementam. O core nunca importa um provedor.</blockquote>
 <hr>
-<h2>Passo a passo, com código</h2>
+<figure><img src="medium/img/pt/modules.png" alt="Dependências entre os módulos"></figure>
+<p><strong>Como os módulos são separados</strong></p>
+<p><strong>1 · <code>contract</code></strong>: os tipos compartilhados (<code>SupportAnswer</code>, <code>AgentEvent</code>). Sem dependências, pronto para Kotlin Multiplatform.<br><strong>2 · <code>core</code></strong>: o coração. Agent loop, orquestração, guardrails e as <strong>portas</strong> (interfaces). Ele não sabe o que é HTTP, Anthropic ou JSON.<br><strong>3 · <code>adapters</code></strong>: implementam as portas. Cliente Anthropic, RAG, arquivos, cliente MCP. Trocar o Claude por outro modelo é escrever um adapter novo, sem tocar no <code>core</code>.<br><strong>4 · <code>mcp-orders</code> e <code>mcp-tickets</code></strong>: servidores independentes que falam MCP.<br><strong>5 · <code>cli</code>, <code>server</code>, <code>app</code></strong>: pontos de entrada (terminal, API Ktor com SSE, app Compose).<br><strong>6 · <code>eval</code></strong>: a suíte de avaliação com golden dataset.</p>
+<hr>
+<h2>3️⃣ Os conceitos na prática (da teoria ao código)</h2>
 <h3>01 · Agent loop: o modelo decide, o seu código age</h3>
 <figure><img src="medium/img/pt/panel-1.png" alt=""></figure>
 <p>Um modelo só produz texto. O laço deixa ele pedir ajuda, ler o resultado e tentar de novo.</p>
@@ -468,7 +532,6 @@ override suspend fun beforeTool(agent: String, tool: ToolSpec, args: JsonObject)
 <h3>11 · Evals: uma prova com gabarito</h3>
 <figure><img src="medium/img/pt/panel-9-2.png" alt=""></figure>
 <p>15 casos dourados, cada um rodado 3 vezes, porque o mesmo código deu resultados diferentes.</p>
-<table><tr><th>Métrica</th><th>Primeira rodada</th><th>Depois das correções</th></tr><tr><td>Fatos esperados presentes</td><td>93%</td><td>100%</td></tr><tr><td>Fontes esperadas citadas</td><td>86%</td><td>100%</td></tr><tr><td>Precisão de escalonamento</td><td>80%</td><td>100%</td></tr><tr><td>Fallback da revisão</td><td>9%</td><td>0%</td></tr></table>
 <p>Os evals acharam o que code review nunca acharia: duas regras que se contradiziam, um revisor que inventava objeções e um erro de roteamento que se repetia sempre. Cerca de 30 centavos, uma tarde.</p>
 <h3>12 · Servidor e app</h3>
 <figure><img src="medium/img/pt/panel-11.png" alt=""></figure>
@@ -484,6 +547,25 @@ post(&quot;/chat&quot;) {
     }
 }</code></pre>
 <p>A chave da API vive só no servidor. O app Compose desenha a conversa, as fontes, um selo de escalonamento e o rastro ao vivo.</p>
+<hr>
+<hr>
+<h2>4️⃣ Anatomia de uma execução real</h2>
+<p>O cliente escreve: <code>"My order 1042 has not arrived. My email is ana@example.com"</code>.</p>
+<figure><img src="medium/img/pt/where-ai.png" alt="Onde está o modelo e onde está o código"></figure>
+<p>Este é o rastro real no terminal (resumido):</p>
+<pre><code>[orchestrator] calls orders {&quot;task&quot;:&quot;Check the status, tracking and delivery progress...&quot;}
+[orders] calls get_order_status {&quot;order_id&quot;:&quot;1042&quot;,&quot;email&quot;:&quot;ana@example.com&quot;}
+[orders] calls track_shipment   {&quot;order_id&quot;:&quot;1042&quot;,&quot;email&quot;:&quot;ana@example.com&quot;}   &lt;- em paralelo
+[orders] get_order_status finished in 12 ms: {&quot;ok&quot;:true,&quot;status&quot;:&quot;in_transit&quot;,&quot;late&quot;:true,&quot;days_late&quot;:10}
+[orchestrator] calls escalation {&quot;task&quot;:&quot;Delayed order. Order number: 1042 ...&quot;}
+[escalation] create_ticket finished in 17 ms: {&quot;ok&quot;:true,&quot;ticket_id&quot;:&quot;TCK-1001&quot;}
+review round 1: rejected (4 problems)
+review round 2: approved</code></pre>
+<blockquote class="tip"><strong>💡 Eficiência e custo</strong><br>12 chamadas ao modelo, cerca de 15 mil tokens de entrada e 2 mil de saída. Custo: <strong>US$ 0,0025</strong> (um quarto de centavo) com <code>claude-haiku-5-5</code>.</blockquote>
+<hr>
+<h2>5️⃣ Evals: como provar que o agente funciona</h2>
+<p>Se você não mede o agente, você só tem opiniões. O <code>eval</code> roda um golden dataset de 15 casos, 3 vezes cada, a cada mudança.</p>
+<table><tr><th>Métrica</th><th>Antes</th><th>Depois</th><th>O que significa na prática</th></tr><tr><td>Acerto de roteamento</td><td>100%</td><td>100%</td><td>O orquestrador manda a dúvida ao especialista certo</td></tr><tr><td>Groundedness</td><td>100%</td><td>100%</td><td>Nenhuma resposta inventa fatos fora das fontes</td></tr><tr><td>Sem vazamento</td><td>100%</td><td>100%</td><td>Dados do cliente não aparecem onde não deviam</td></tr><tr><td>Fatos esperados</td><td>93%</td><td>100%</td><td>As informações vitais foram entregues</td></tr><tr><td>Fontes citadas</td><td>86%</td><td>100%</td><td>Dá para ver de onde veio a resposta</td></tr><tr><td>Precisão de escalonamento</td><td>80%</td><td>100%</td><td>Passa a um humano na hora certa</td></tr><tr><td>Fallback por falha de revisão</td><td>9%</td><td>0%</td><td>Respostas refinadas sem estourar o limite</td></tr></table>
 <hr>
 <h2>Testes e containerização</h2>
 <p>Uma classe de teste por classe de produção. Dublês nas portas. <strong>Zero chamadas de API.</strong></p>
@@ -511,10 +593,15 @@ ENV DATA_DIR=data
 EXPOSE 8080
 CMD [&quot;bin/server&quot;]</code></pre>
 <hr>
+<hr>
 <h2>O preço do "multi"</h2>
 <blockquote class="warn"><strong>⚠️ Alerta</strong><br>Uma pergunta de pedido atrasado custou <strong>12 chamadas ao modelo</strong>, cerca de 15.000 tokens de entrada e 10 segundos. Multiagente não é de graça.</blockquote>
 <p>Use um agente com ferramentas quando a tarefa é pequena. Divida em especialistas só quando prompts e ferramentas crescem e os papéis são claramente diferentes.</p>
-<h2>Conclusão</h2>
+<h2>🏁 Conclusão provocativa</h2>
+<p>Engenharia de software não mudou só porque agora usamos IA. Agentes sem <strong>tipagem forte</strong>, <strong>arquitetura limpa</strong>, <strong>guardrails em código</strong> e <strong>avaliação automatizada</strong> são brinquedos imprevisíveis.</p>
+<p>A inovação não é o framework da semana. É saber <strong>onde usar o não-determinismo do modelo</strong> e <strong>onde usar o determinismo do código</strong>.</p>
+<hr>
+<h3>Conclusão</h3>
 <p>O modelo decide. O seu código age, valida e escala. As regras vivem no código. A qualidade é medida. Os provedores são substituíveis.</p>
 <p><strong>Sua vez</strong></p>
 <p><strong>1</strong> · Qual regra do seu projeto poderia ser código em vez de prompt? Conte nos comentários.<br><strong>2</strong> · Discorda que a maior parte de um agente deva ser determinística? Quero ouvir o contraexemplo.<br><strong>3</strong> · Compartilhe com quem está prestes a construir "um agente de IA". Uma estrela no repositório ajuda: <a href="https://github.com/diegoferreiracaetano/dsupport-kt">github.com/diegoferreiracaetano/dsupport-kt</a></p></div></main><script>var b=document.body;try{if(localStorage.getItem("lang")==="pt")b.classList.add("pt")}catch(e){}document.getElementById("t").onclick=function(){b.classList.toggle("pt");try{localStorage.setItem("lang",b.classList.contains("pt")?"pt":"en")}catch(e){}}</script></body></html>

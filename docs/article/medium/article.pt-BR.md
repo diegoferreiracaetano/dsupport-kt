@@ -7,35 +7,42 @@
 > 2. *Carreira:* "Construí um assistente de IA multiagente sem framework. Eis o que aprendi."
 > 3. *Boas práticas:* "RAG, MCP e multiagente na prática: onde o modelo entra e onde o código comum tem que vencer"
 
-Todo mundo fala de IA. RAG. MCP. Multiagente. Guardrails. Evals.
-
-Os slides estão cheios deles. Quase ninguém mostra o que eles são **na prática**.
+> **⚠️ Provocação inicial**
+> O mercado foi inundado de *buzzwords*: RAG, MCP, arquitetura multiagente, guardrails. Todo dia surge um framework prometendo "agentes autônomos em duas linhas".
+> Mas o que acontece quando um agente de demo encontra um suporte ao cliente de verdade? Ele inventa políticas, ignora regras de negócio e vaza dados.
+> Chega de *vibes-based engineering*.
 
 Então construí um do zero em Kotlin, sem framework, e medi. Sem paredão de jargão: primeiro as ideias em palavras simples, depois o código para os curiosos.
 
 ![Os termos da moda em palavras simples](img/pt/terms.png)
 
-> **⚠️ A pergunta desconfortável**
-> Se uma regra pode ser escrita como código, um modelo deveria chegar perto dela?
-> Spoiler: neste projeto, cinco papéis usam um modelo e **catorze peças são código comum**.
-
 ---
 
-## O projeto: DSupport
+## 1️⃣ A grande ilusão do "tudo é LLM": determinístico vs não-determinístico
 
-Um assistente de suporte. Um cliente escreve:
+Existe a ilusão de que o modelo de linguagem deve decidir 100% do software. Mas um LLM é um motor **probabilístico**. Pedir a ele, por prompt, que nunca mostre um cartão de crédito no log é roleta-russa.
 
-> "My order 1042 has not arrived. My email is ana@example.com"
+```text
++-----------------------------------------------------------------------+
+|                       SISTEMA HÍBRIDO (DSupport)                       |
++------------------------------------+----------------------------------+
+|  Modelo (não-determinístico)       |  Código (determinístico)         |
++------------------------------------+----------------------------------+
+|  - entender linguagem natural      |  - validar tipos e regras        |
+|  - decidir qual ferramenta chamar  |  - ocultar dados sensíveis       |
+|  - rascunhar a resposta            |  - barrar o que não pode passar  |
+|  - rotear entre especialistas      |  - testes que rodam offline      |
++------------------------------------+----------------------------------+
+```
 
-![De uma pergunta a uma resposta](img/pt/story.png)
+**Três jeitos de construir isso:**
 
-Ele precisa responder **só com fontes**, **nunca inventar** um número de ticket, **passar o caso a um humano** na dúvida e ser **medido**, não admirado.
+**1 · Só determinístico (`if/else`, máquinas de estado).** Não alucina, mas não entende paráfrase e a lista de regras cresce para sempre.
+**2 · Só modelo ("agente autônomo").** Promete tudo, entrega respostas imprevisíveis, laços infinitos e custo fora de controle.
+**3 · Híbrido (o DSupport).** O modelo entende e escolhe ferramentas. O código valida, barra e testa.
 
-Repositório: github.com/diegoferreiracaetano/dsupport-kt
-
----
-
-## Vale a pena? Determinístico vs agente
+> **⚠️ Alerta**
+> Depender só do prompt falha em produção. Prompt é sugestão, não garantia. Uma injeção de prompt ou uma variação estocástica quebra a regra.
 
 Sendo honesto: uma versão determinística é a primeira coisa que você deve tentar. Veja como ela fica.
 
@@ -61,7 +68,7 @@ fun route(message: String): Intent = when {
 > **⚠️ Alerta**
 > A versão determinística falha na **linguagem**, não na lógica. O agente falha na **confiança**. Escolha a falha com a qual você consegue viver.
 
-### A decisão, em cinco blocos
+#### A decisão, em cinco blocos
 
 **1 · Entrada fechada, regras conhecidas?** Use código. Não pague um modelo para ler um enum de status.
 **2 · Linguagem aberta, muitas formas de dizer?** Use um modelo para entender.
@@ -69,9 +76,7 @@ fun route(message: String): Intent = when {
 **4 · Precisa ser auditável?** Código, ou um modelo cuja saída o código valida.
 **5 · Orçamento mínimo de custo ou latência?** Código.
 
-### Onde está o modelo e onde está o código
-
-![Onde está o modelo](img/pt/where-ai.png)
+#### Onde está o modelo e onde está o código
 
 Cinco papéis usam um modelo: o orquestrador e os três especialistas, mais o revisor. Catorze peças são código comum: `IdentityGate`, `Redaction`, `RedactResults`, `MentionTicket`, `TicketDedup`, `GuardPolicy`, `SupportAnswerValidator`, o limite da revisão e o escalonamento, `MarkdownChunker`, a busca TF-IDF, as quatro ferramentas, o cliente e os servidores MCP, `TraceReport` e o pontuador dos evals.
 
@@ -80,7 +85,19 @@ Cinco papéis usam um modelo: o orquestrador e os três especialistas, mais o re
 
 ---
 
-## Como o projeto é separado
+---
+
+## 2️⃣ O projeto e a arquitetura: separação limpa de responsabilidades
+
+Um assistente de suporte. Um cliente escreve:
+
+> "My order 1042 has not arrived. My email is ana@example.com"
+
+![De uma pergunta a uma resposta](img/pt/story.png)
+
+Ele precisa responder **só com fontes**, **nunca inventar** um número de ticket, **passar o caso a um humano** na dúvida e ser **medido**, não admirado.
+
+Repositório: github.com/diegoferreiracaetano/dsupport-kt
 
 ```text
 dsupport-kt/
@@ -97,14 +114,25 @@ dsupport-kt/
 └── data/          pedidos, golden dataset, artigos da central de ajuda
 ```
 
-**1 · `contract`** é o vocabulário. **2 · `core`** são as regras. **3 · `adapters`** é o mundo de fora. **4 · o resto** são pontos de entrada.
-
 > **✅ Regra de bolso**
 > As dependências apontam **para dentro**. O core define portas (interfaces). Adapters na borda as implementam. O core nunca importa um provedor.
 
 ---
 
-## Passo a passo, com código
+![Dependências entre os módulos](img/pt/modules.png)
+
+**Como os módulos são separados**
+
+**1 · `contract`**: os tipos compartilhados (`SupportAnswer`, `AgentEvent`). Sem dependências, pronto para Kotlin Multiplatform.
+**2 · `core`**: o coração. Agent loop, orquestração, guardrails e as **portas** (interfaces). Ele não sabe o que é HTTP, Anthropic ou JSON.
+**3 · `adapters`**: implementam as portas. Cliente Anthropic, RAG, arquivos, cliente MCP. Trocar o Claude por outro modelo é escrever um adapter novo, sem tocar no `core`.
+**4 · `mcp-orders` e `mcp-tickets`**: servidores independentes que falam MCP.
+**5 · `cli`, `server`, `app`**: pontos de entrada (terminal, API Ktor com SSE, app Compose).
+**6 · `eval`**: a suíte de avaliação com golden dataset.
+
+---
+
+## 3️⃣ Os conceitos na prática (da teoria ao código)
 
 ### 01 · Agent loop: o modelo decide, o seu código age
 
@@ -335,13 +363,6 @@ Todo evento carrega um `runId` e um `parentRunId`, então dá para reconstruir u
 
 15 casos dourados, cada um rodado 3 vezes, porque o mesmo código deu resultados diferentes.
 
-| Métrica | Primeira rodada | Depois das correções |
-|---|---|---|
-| Fatos esperados presentes | 93% | 100% |
-| Fontes esperadas citadas | 86% | 100% |
-| Precisão de escalonamento | 80% | 100% |
-| Fallback da revisão | 9% | 0% |
-
 Os evals acharam o que code review nunca acharia: duas regras que se contradiziam, um revisor que inventava objeções e um erro de roteamento que se repetia sempre. Cerca de 30 centavos, uma tarde.
 
 ### 12 · Servidor e app
@@ -364,6 +385,48 @@ post("/chat") {
 ```
 
 A chave da API vive só no servidor. O app Compose desenha a conversa, as fontes, um selo de escalonamento e o rastro ao vivo.
+
+---
+
+---
+
+## 4️⃣ Anatomia de uma execução real
+
+O cliente escreve: `"My order 1042 has not arrived. My email is ana@example.com"`.
+
+![Onde está o modelo e onde está o código](img/pt/where-ai.png)
+
+Este é o rastro real no terminal (resumido):
+
+```text
+[orchestrator] calls orders {"task":"Check the status, tracking and delivery progress..."}
+[orders] calls get_order_status {"order_id":"1042","email":"ana@example.com"}
+[orders] calls track_shipment   {"order_id":"1042","email":"ana@example.com"}   <- em paralelo
+[orders] get_order_status finished in 12 ms: {"ok":true,"status":"in_transit","late":true,"days_late":10}
+[orchestrator] calls escalation {"task":"Delayed order. Order number: 1042 ..."}
+[escalation] create_ticket finished in 17 ms: {"ok":true,"ticket_id":"TCK-1001"}
+review round 1: rejected (4 problems)
+review round 2: approved
+```
+
+> **💡 Eficiência e custo**
+> 12 chamadas ao modelo, cerca de 15 mil tokens de entrada e 2 mil de saída. Custo: **US$ 0,0025** (um quarto de centavo) com `claude-haiku-5-5`.
+
+---
+
+## 5️⃣ Evals: como provar que o agente funciona
+
+Se você não mede o agente, você só tem opiniões. O `eval` roda um golden dataset de 15 casos, 3 vezes cada, a cada mudança.
+
+| Métrica | Antes | Depois | O que significa na prática |
+|---|---|---|---|
+| Acerto de roteamento | 100% | 100% | O orquestrador manda a dúvida ao especialista certo |
+| Groundedness | 100% | 100% | Nenhuma resposta inventa fatos fora das fontes |
+| Sem vazamento | 100% | 100% | Dados do cliente não aparecem onde não deviam |
+| Fatos esperados | 93% | 100% | As informações vitais foram entregues |
+| Fontes citadas | 86% | 100% | Dá para ver de onde veio a resposta |
+| Precisão de escalonamento | 80% | 100% | Passa a um humano na hora certa |
+| Fallback por falha de revisão | 9% | 0% | Respostas refinadas sem estourar o limite |
 
 ---
 
@@ -402,6 +465,7 @@ CMD ["bin/server"]
 ```
 
 ---
+---
 
 ## O preço do "multi"
 
@@ -410,7 +474,15 @@ CMD ["bin/server"]
 
 Use um agente com ferramentas quando a tarefa é pequena. Divida em especialistas só quando prompts e ferramentas crescem e os papéis são claramente diferentes.
 
-## Conclusão
+## 🏁 Conclusão provocativa
+
+Engenharia de software não mudou só porque agora usamos IA. Agentes sem **tipagem forte**, **arquitetura limpa**, **guardrails em código** e **avaliação automatizada** são brinquedos imprevisíveis.
+
+A inovação não é o framework da semana. É saber **onde usar o não-determinismo do modelo** e **onde usar o determinismo do código**.
+
+---
+
+### Conclusão
 
 O modelo decide. O seu código age, valida e escala. As regras vivem no código. A qualidade é medida. Os provedores são substituíveis.
 

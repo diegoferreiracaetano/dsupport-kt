@@ -7,35 +7,42 @@
 > 2. *Career:* "I built a multi-agent AI assistant without a framework. Here is what it taught me."
 > 3. *Best practices:* "RAG, MCP and multi-agent in practice: where the model belongs and where plain code must win"
 
-Everyone is talking about AI. RAG. MCP. Multi-agent. Guardrails. Evals.
-
-Slides are full of them. Almost nobody shows what they are **in practice**.
+> **⚠️ Opening provocation**
+> The market is flooded with buzzwords: RAG, MCP, multi-agent architecture, guardrails. Every day a new framework promises "autonomous agents in two lines".
+> What happens when a demo agent meets a real support desk? It invents policies, ignores business rules and leaks data.
+> Enough *vibes-based engineering*.
 
 So I built one from scratch in Kotlin, with no framework, and measured it. No jargon wall: first the ideas in plain words, then the code for the curious.
 
 ![The buzzwords in plain words](img/en/terms.png)
 
-> **⚠️ The uncomfortable question**
-> If a rule can be written as code, should a model be anywhere near it?
-> Spoiler: in this project, five roles use a model and **fourteen pieces are plain code**.
-
 ---
 
-## The project: DSupport
+## 1️⃣ The big illusion of "everything is an LLM": deterministic vs non-deterministic
 
-A support assistant. A customer writes:
+There is an illusion that the language model should decide 100% of a piece of software. But an LLM is a **probabilistic** engine. Asking it, by prompt, to never print a credit card in a log is Russian roulette.
 
-> "My order 1042 has not arrived. My email is ana@example.com"
+```text
++-----------------------------------------------------------------------+
+|                        HYBRID SYSTEM (DSupport)                        |
++------------------------------------+----------------------------------+
+|  Model (non-deterministic)         |  Code (deterministic)            |
++------------------------------------+----------------------------------+
+|  - understand natural language     |  - validate types and rules      |
+|  - decide which tool to call       |  - hide sensitive data           |
+|  - draft the reply                 |  - block what must not pass      |
+|  - route between specialists       |  - tests that run offline        |
++------------------------------------+----------------------------------+
+```
 
-![From a question to an answer](img/en/story.png)
+**Three ways to build it:**
 
-It must answer **only from sources**, **never invent** a ticket number, **hand the case to a human** when unsure, and be **measured**, not admired.
+**1 · Only deterministic (`if/else`, state machines).** It does not hallucinate, but it does not understand paraphrase and the rule list grows forever.
+**2 · Only a model ("autonomous agent").** It promises everything and delivers unpredictable answers, endless loops and runaway cost.
+**3 · Hybrid (DSupport).** The model understands and picks tools. The code validates, blocks and tests.
 
-Repository: github.com/diegoferreiracaetano/dsupport-kt
-
----
-
-## Worth it? Deterministic vs agent
+> **⚠️ Alert**
+> Relying on the prompt alone fails in production. A prompt is a suggestion, not a guarantee. A prompt injection or a stochastic variation breaks the rule.
 
 Be honest: a deterministic version is the first thing you should try. Here is what it looks like.
 
@@ -61,7 +68,7 @@ It is fast, free, testable and 100% predictable. Now feed it what customers actu
 > **⚠️ Alert**
 > The deterministic version fails on **language**, not on logic. The agent fails on **trust**. Pick the failure you can live with.
 
-### The decision, as five blocks
+#### The decision, as five blocks
 
 **1 · Closed input, known rules?** Use code. Do not pay for a model to read a status enum.
 **2 · Open language, many phrasings?** Use a model to understand it.
@@ -69,9 +76,7 @@ It is fast, free, testable and 100% predictable. Now feed it what customers actu
 **4 · Must be auditable?** Code, or a model whose output code validates.
 **5 · Tiny cost or latency budget?** Code.
 
-### Where the model is, and where code is
-
-![Where the model is](img/en/where-ai.png)
+#### Where the model is, and where code is
 
 Five roles use a model: the orchestrator and the three specialists, plus the reviewer. Fourteen pieces are plain code: `IdentityGate`, `Redaction`, `RedactResults`, `MentionTicket`, `TicketDedup`, `GuardPolicy`, `SupportAnswerValidator`, the review limit and escalation, `MarkdownChunker`, the TF-IDF search, the four tools, the MCP client and servers, `TraceReport` and the eval scorer.
 
@@ -80,7 +85,19 @@ Five roles use a model: the orchestrator and the three specialists, plus the rev
 
 ---
 
-## How the project is separated
+---
+
+## 2️⃣ The project and the architecture: clean separation of responsibilities
+
+A support assistant. A customer writes:
+
+> "My order 1042 has not arrived. My email is ana@example.com"
+
+![From a question to an answer](img/en/story.png)
+
+It must answer **only from sources**, **never invent** a ticket number, **hand the case to a human** when unsure, and be **measured**, not admired.
+
+Repository: github.com/diegoferreiracaetano/dsupport-kt
 
 ```text
 dsupport-kt/
@@ -97,14 +114,25 @@ dsupport-kt/
 └── data/          orders, golden dataset, help-center articles
 ```
 
-**1 · `contract`** is the vocabulary. **2 · `core`** is the rules. **3 · `adapters`** is the outside world. **4 · everything else** is an entry point.
-
 > **✅ Rule of thumb**
 > Dependencies point **inward**. The core defines ports (interfaces). Adapters at the edge implement them. The core never imports a provider.
 
 ---
 
-## Step by step, with code
+![Module dependencies](img/en/modules.png)
+
+**How the modules are separated**
+
+**1 · `contract`**: the shared types (`SupportAnswer`, `AgentEvent`). No dependencies, ready for Kotlin Multiplatform.
+**2 · `core`**: the heart. Agent loop, orchestration, guardrails and the **ports** (interfaces). It does not know what HTTP, Anthropic or JSON is.
+**3 · `adapters`**: implement the ports. Anthropic client, RAG, files, MCP client. Swapping Claude for another model is writing a new adapter, without touching `core`.
+**4 · `mcp-orders` and `mcp-tickets`**: independent servers that speak MCP.
+**5 · `cli`, `server`, `app`**: entry points (terminal, Ktor API with SSE, Compose app).
+**6 · `eval`**: the evaluation suite with a golden dataset.
+
+---
+
+## 3️⃣ The concepts in practice (from theory to code)
 
 ### 01 · Agent loop: the model decides, your code acts
 
@@ -335,13 +363,6 @@ Every event carries a `runId` and a `parentRunId`, so a tree can be rebuilt:
 
 15 golden cases, each run 3 times, because the same code gave different results.
 
-| Metric | First run | After fixes |
-|---|---|---|
-| Expected facts present | 93% | 100% |
-| Expected sources cited | 86% | 100% |
-| Escalation precision | 80% | 100% |
-| Review fallback | 9% | 0% |
-
 The evals found what code review never would: two rules that contradicted each other, a reviewer that invented objections, and a routing error that repeated every time. About 30 cents, one afternoon.
 
 ### 12 · Server and app
@@ -364,6 +385,48 @@ post("/chat") {
 ```
 
 The API key lives only on the server. The Compose app draws the conversation, the sources, an escalation badge and the live trace.
+
+---
+
+---
+
+## 4️⃣ Anatomy of a real run
+
+The customer writes: `"My order 1042 has not arrived. My email is ana@example.com"`.
+
+![Where the model is and where code is](img/en/where-ai.png)
+
+This is the real terminal trace (shortened):
+
+```text
+[orchestrator] calls orders {"task":"Check the status, tracking and delivery progress..."}
+[orders] calls get_order_status {"order_id":"1042","email":"ana@example.com"}
+[orders] calls track_shipment   {"order_id":"1042","email":"ana@example.com"}   <- in parallel
+[orders] get_order_status finished in 12 ms: {"ok":true,"status":"in_transit","late":true,"days_late":10}
+[orchestrator] calls escalation {"task":"Delayed order. Order number: 1042 ..."}
+[escalation] create_ticket finished in 17 ms: {"ok":true,"ticket_id":"TCK-1001"}
+review round 1: rejected (4 problems)
+review round 2: approved
+```
+
+> **💡 Efficiency and cost**
+> 12 model calls, about 15 thousand input tokens and 2 thousand output tokens. Cost: **US$ 0.0025** (a quarter of a cent) with `claude-haiku-5-5`.
+
+---
+
+## 5️⃣ Evals: how to prove the agent works
+
+If you do not measure the agent, you only have opinions. `eval` runs a golden dataset of 15 cases, 3 times each, on every change.
+
+| Metric | Before | After | What it means in practice |
+|---|---|---|---|
+| Routing accuracy | 100% | 100% | The orchestrator sends the question to the right specialist |
+| Groundedness | 100% | 100% | No answer invents facts outside the sources |
+| No leaks | 100% | 100% | Customer data does not show up where it should not |
+| Expected facts | 93% | 100% | The vital information was delivered |
+| Cited sources | 86% | 100% | You can see where the answer came from |
+| Escalation precision | 80% | 100% | Hands over to a human at the right time |
+| Fallback after failed review | 9% | 0% | Answers refined without hitting the limit |
 
 ---
 
@@ -402,6 +465,7 @@ CMD ["bin/server"]
 ```
 
 ---
+---
 
 ## The price of "multi"
 
@@ -410,7 +474,15 @@ CMD ["bin/server"]
 
 Use one agent with tools when the task is small. Split into specialists only when prompts and toolsets grow and the roles are clearly different.
 
-## Conclusion
+## 🏁 Provocative conclusion
+
+Software engineering did not change just because we now use AI. Agents without **strong typing**, **clean architecture**, **guardrails in code** and **automated evaluation** are unpredictable toys.
+
+The innovation is not the framework of the week. It is knowing **where to use the model's non-determinism** and **where to use the determinism of code**.
+
+---
+
+### Conclusion
 
 The model decides. Your code acts, validates and escalates. Rules live in code. Quality is measured. Providers are replaceable.
 
