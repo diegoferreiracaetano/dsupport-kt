@@ -103,7 +103,7 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 - [x] Real report in `reports/` (baseline: `eval-2026-10-17-2043.md`; run with `./gradlew :eval:run`)
 
 ### E10 — Phase 1 wrap-up [M] · tag `fase-1`
-- [ ] README with a diagram, how to run, metrics and a trace excerpt
+- [x] README with a diagram, how to run, metrics and a trace excerpt (ADR 0002 comes with stage 5)
 - [ ] ADRs 0001 to 0003
 - [ ] Spec success criteria checked and every tag exists
 

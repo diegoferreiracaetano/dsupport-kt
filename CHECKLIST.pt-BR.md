@@ -103,7 +103,7 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [x] Relatório real em `reports/` (linha de base: `eval-2026-10-17-2043.md`; rode com `./gradlew :eval:run`)
 
 ### E10 — Fechamento da fase 1 [M] · tag `fase-1`
-- [ ] README com diagrama, como rodar, métricas e um trecho de trace
+- [x] README com diagrama, como rodar, métricas e um trecho de trace (o ADR 0002 vem com a etapa 5)
 - [ ] ADRs 0001 a 0003
 - [ ] Critérios de sucesso da spec conferidos e todas as tags existem
 
