@@ -10,9 +10,12 @@ plugins {
 }
 
 dependencyResolutionManagement {
-    repositories { mavenCentral() }
+    repositories {
+        mavenCentral()
+        google()
+    }
 }
 
 rootProject.name = "dsupport-kt"
 
-include(":contract", ":core", ":testing", ":adapters", ":mcp-orders", ":mcp-tickets", ":cli", ":eval")
+include(":contract", ":core", ":testing", ":adapters", ":mcp-orders", ":mcp-tickets", ":cli", ":eval", ":server", ":app")

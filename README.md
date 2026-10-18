@@ -72,13 +72,15 @@ Each stage is a git tag (`git checkout etapa-4`) and has a guide in [docs/stages
 | `etapa-2` | **LLM client** (port + adapter) | swap the brain, keep the system |
 | `etapa-3` | **Tools** | giving the assistant hands |
 | `etapa-4` | **RAG** (Retrieval-Augmented Generation) | answering with a consultation |
+| `etapa-5` | **MCP** (Model Context Protocol) | tools served by separate programs |
 | `etapa-6` | **Multi-agent orchestration** | a team of specialists with a coordinator |
 | `etapa-7` | **Guardrails** | rules the model can neither see nor skip |
 | `etapa-8.1` | **Structured output** and validation | the answer as a form |
 | `etapa-8.2` | **Producer–reviewer loop** | a second pair of eyes, with a limit |
+| `etapa-9.1` | **Observability** | a trace tree and the cost of each agent |
 | `etapa-9.2` | **Evals** | an exam with an answer key |
 
-MCP servers (stage 5) are used by setting `MCP_SERVERS_FILE=config/mcp-servers.json` after `./gradlew installDist`; the terminal prints the trace tree and cost per agent (stage 9.1). Still to come: phase 2 (a Ktor server and a small Compose app for real interactions).
+MCP servers (stage 5) are used by setting `MCP_SERVERS_FILE=config/mcp-servers.json` after `./gradlew installDist`; the terminal prints the trace tree and cost per agent (stage 9.1). Phase 2 adds a Ktor server and a small Compose Desktop app, see [docs/stages/11-12-interface.md](docs/stages/11-12-interface.md).
 
 ## Results
 
@@ -104,7 +106,7 @@ Requirements: JDK 21 (the Gradle JVM is pinned in `gradle/gradle-daemon-jvm.prop
 ./gradlew test
 ```
 
-The 314 tests run offline, with no key.
+The tests (more than 380) run offline, with no key.
 
 To talk to the real assistant, copy `.env.example` to `.env`, put your `ANTHROPIC_API_KEY` in it, and load it in the terminal (never commit it):
 

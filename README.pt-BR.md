@@ -72,13 +72,15 @@ Cada etapa é uma tag do git (`git checkout etapa-4`) e tem um guia em [docs/sta
 | `etapa-2` | **LLM client** (porta + adaptador) | troca o cérebro, mantém o sistema |
 | `etapa-3` | **Tools** | dar mãos ao assistente |
 | `etapa-4` | **RAG** (Retrieval-Augmented Generation) | responder com consulta |
+| `etapa-5` | **MCP** (Model Context Protocol) | ferramentas servidas por programas separados |
 | `etapa-6` | **Multi-agent orchestration** | uma equipe de especialistas com um coordenador |
 | `etapa-7` | **Guardrails** | regras que o modelo não vê nem pula |
 | `etapa-8.1` | **Structured output** (saída estruturada) e validação | a resposta em formulário |
 | `etapa-8.2` | **Producer–reviewer loop** | uma segunda opinião, com limite |
+| `etapa-9.1` | **Observability** | uma árvore de rastro e o custo de cada agente |
 | `etapa-9.2` | **Evals** | uma prova com gabarito |
 
-Os servidores MCP (etapa 5) são usados definindo `MCP_SERVERS_FILE=config/mcp-servers.json` depois de `./gradlew installDist`; o terminal imprime a árvore de rastro e o custo por agente (etapa 9.1). Ainda por vir: a fase 2 (um servidor Ktor e um appzinho em Compose para interações reais).
+Os servidores MCP (etapa 5) são usados definindo `MCP_SERVERS_FILE=config/mcp-servers.json` depois de `./gradlew installDist`; o terminal imprime a árvore de rastro e o custo por agente (etapa 9.1). A fase 2 traz um servidor Ktor e um appzinho em Compose Desktop, veja [docs/stages/11-12-interface.pt-BR.md](docs/stages/11-12-interface.pt-BR.md).
 
 ## Resultados
 
@@ -104,7 +106,7 @@ Requisitos: JDK 21 (a JVM do Gradle é fixada em `gradle/gradle-daemon-jvm.prope
 ./gradlew test
 ```
 
-Os 314 testes rodam offline, sem chave.
+Os testes (mais de 380) rodam offline, sem chave.
 
 Para conversar com o assistente de verdade, copie o `.env.example` para `.env`, coloque a sua `ANTHROPIC_API_KEY` nele e carregue no terminal (nunca faça commit dele):
 

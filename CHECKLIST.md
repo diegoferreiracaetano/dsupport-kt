@@ -112,14 +112,14 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 ## Phase 2 — Interface (own spec and plan, after phase 1)
 
 ### E11 — Ktor server
-- [ ] Phase 2 spec and plan
-- [ ] `server`: `POST /chat` with event streaming, key only on the server
-- [ ] HTTP contract test
+- [x] Phase 2 spec and plan
+- [x] `server`: `POST /chat` with event streaming, key only on the server
+- [x] HTTP contract test
 
 ### E12 — Compose Multiplatform app (a small app for real interactions)
-- [ ] Targets chosen (Android + Desktop first; iOS and Web later, checking current maturity)
-- [ ] `contract` enabled for the app's targets
-- [ ] Chat where a person types real questions and sees the answer, cited sources, an escalated badge and the live trace tree (the same `AgentEvent` stream the terminal prints)
+- [x] Targets chosen (Desktop first; Android, iOS and Web later, checking current maturity)
+- [x] `contract` enabled for the app's targets
+- [x] Chat where a person types real questions and sees the answer, cited sources, an escalated badge and the live trace tree (the same `AgentEvent` stream the terminal prints)
 - [ ] Server reachable from the clients (emulator, simulator, real device)
 
 ---

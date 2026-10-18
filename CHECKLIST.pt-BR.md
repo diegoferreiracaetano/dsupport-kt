@@ -112,14 +112,14 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 ## Fase 2 — Interface (spec e plano próprios, depois da fase 1)
 
 ### E11 — Servidor Ktor
-- [ ] Spec e plano da fase 2
-- [ ] `server`: `POST /chat` com streaming de eventos, chave só no servidor
-- [ ] Teste do contrato HTTP
+- [x] Spec e plano da fase 2
+- [x] `server`: `POST /chat` com streaming de eventos, chave só no servidor
+- [x] Teste do contrato HTTP
 
 ### E12 — App Compose Multiplatform (um appzinho para interações reais)
-- [ ] Alvos escolhidos (Android + Desktop primeiro; iOS e Web depois, conferindo a maturidade atual)
-- [ ] `contract` habilitado para os alvos do app
-- [ ] Chat em que uma pessoa digita perguntas reais e vê a resposta, as fontes citadas, o selo de escalado e a árvore do trace ao vivo (o mesmo fluxo de `AgentEvent` que o terminal imprime)
+- [x] Alvos escolhidos (Desktop primeiro; Android, iOS e Web depois, conferindo a maturidade atual)
+- [x] `contract` habilitado para os alvos do app
+- [x] Chat em que uma pessoa digita perguntas reais e vê a resposta, as fontes citadas, o selo de escalado e a árvore do trace ao vivo (o mesmo fluxo de `AgentEvent` que o terminal imprime)
 - [ ] Servidor acessível pelos clientes (emulador, simulador, aparelho real)
 
 ---
