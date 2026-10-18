@@ -128,6 +128,48 @@ A avaliação mostra o custo estimado antes de começar (cerca de 9 centavos de 
 
 `REFERENCE_DATE` fixa o que "hoje" significa, para "atrasado" não mudar com o calendário. O `data/tickets.json` muda quando você roda o CLI: volte-o para `[]` antes de commitar.
 
+### Servidor e app
+
+Terminal 1 (a chave fica só no servidor):
+
+```bash
+set -a; source .env; set +a
+./gradlew :server:run
+```
+
+Terminal 2 (Compose Desktop, português por padrão, seletor PT/EN, temas claro e escuro):
+
+```bash
+./gradlew :app:run
+```
+
+Para testar sem o app: `curl -N -X POST localhost:8080/chat -H 'Content-Type: application/json' -d '{"question":"Where is my order 1001? My email is ana@example.com"}'`.
+
+### Ferramentas via MCP
+
+```bash
+./gradlew installDist
+MCP_SERVERS_FILE=config/mcp-servers.json ./gradlew :server:run
+```
+
+### Zerar o arquivo de tickets
+
+```bash
+echo '[]' > data/tickets.json
+```
+
+### Configurações
+
+| Variável | Usada por | Padrão |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | servidor, CLI, eval | obrigatória |
+| `ANTHROPIC_MODEL` | servidor, CLI, eval | `claude-haiku-5-5` |
+| `DATA_DIR` | servidor, CLI, eval, servidores MCP | `data` |
+| `REFERENCE_DATE` | CLI, eval, `mcp-orders` | hoje |
+| `MCP_SERVERS_FILE` | servidor, CLI | vazio (ferramentas locais) |
+| `PORT` | servidor | `8080` |
+| `DSUPPORT_SERVER` | app | `http://localhost:8080` |
+
 ## Documentação
 
 Os documentos do projeto existem em inglês (`nome.md`) e em português (`nome.pt-BR.md`): este README, o [checklist](CHECKLIST.pt-BR.md), os ADRs em `docs/adr`, os guias de etapa, o glossário e o diário de melhoria. A spec de design e o plano de implementação em `docs/superpowers` são documentos de trabalho, mantidos só em português.

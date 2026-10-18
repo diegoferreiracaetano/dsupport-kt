@@ -128,6 +128,48 @@ The evaluation prints its estimated cost before starting (about 9 cents for the 
 
 `REFERENCE_DATE` fixes what "today" means, so "late" does not change with the calendar. `data/tickets.json` changes when you run the CLI: reset it to `[]` before committing.
 
+### Server and app
+
+Terminal 1 (the key stays on the server):
+
+```bash
+set -a; source .env; set +a
+./gradlew :server:run
+```
+
+Terminal 2 (Compose Desktop, Portuguese by default, PT/EN selector, light and dark themes):
+
+```bash
+./gradlew :app:run
+```
+
+Try it without the app: `curl -N -X POST localhost:8080/chat -H 'Content-Type: application/json' -d '{"question":"Where is my order 1001? My email is ana@example.com"}'`.
+
+### Tools over MCP
+
+```bash
+./gradlew installDist
+MCP_SERVERS_FILE=config/mcp-servers.json ./gradlew :server:run
+```
+
+### Reset the tickets file
+
+```bash
+echo '[]' > data/tickets.json
+```
+
+### Settings
+
+| Variable | Used by | Default |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | server, CLI, eval | required |
+| `ANTHROPIC_MODEL` | server, CLI, eval | `claude-haiku-5-5` |
+| `DATA_DIR` | server, CLI, eval, MCP servers | `data` |
+| `REFERENCE_DATE` | CLI, eval, `mcp-orders` | today |
+| `MCP_SERVERS_FILE` | server, CLI | unset (local tools) |
+| `PORT` | server | `8080` |
+| `DSUPPORT_SERVER` | app | `http://localhost:8080` |
+
 ## Documentation
 
 Project documents exist in English (`name.md`) and Portuguese (`name.pt-BR.md`): this README, the [checklist](CHECKLIST.md), the ADRs in `docs/adr`, the stage guides, the glossary and the improvement log. The design spec and the implementation plan under `docs/superpowers` are working documents, kept in Portuguese only.
