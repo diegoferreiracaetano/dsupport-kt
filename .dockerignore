@@ -1,0 +1,9 @@
+.git
+.gradle
+.idea
+**/build
+iosApp
+traces
+.env
+reports
+docs
