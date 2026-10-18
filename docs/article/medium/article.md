@@ -11,7 +11,9 @@ Everyone is talking about AI. RAG. MCP. Multi-agent. Guardrails. Evals.
 
 Slides are full of them. Almost nobody shows what they are **in practice**.
 
-So I built one from scratch in Kotlin, with no framework, and I measured it. This is the honest version: the code, the numbers, and the uncomfortable question at the end.
+So I built one from scratch in Kotlin, with no framework, and measured it. No jargon wall: first the ideas in plain words, then the code for the curious.
+
+![The buzzwords in plain words](img/en/terms.png)
 
 > **⚠️ The uncomfortable question**
 > If a rule can be written as code, should a model be anywhere near it?
@@ -19,50 +21,17 @@ So I built one from scratch in Kotlin, with no framework, and I measured it. Thi
 
 ---
 
-## The buzzwords, translated
-
-**01 · RAG** is search plus paste. Find the right passage, put it in the prompt, answer from it.
-**02 · MCP** is a plug standard. Tools live in other programs and speak one protocol.
-**03 · Multi-agent** is a function that calls other functions, each with its own prompt and its own tools.
-**04 · Guardrails** are `if` statements the model cannot see.
-**05 · Evals** are unit tests with a sample size, because the model is not deterministic.
-**06 · Agent loop** is a `for` loop with a limit.
-
-Sounds less magical? Good. Magic does not pass a code review.
-
----
-
 ## The project: DSupport
 
-A support assistant. The customer writes:
+A support assistant. A customer writes:
 
 > "My order 1042 has not arrived. My email is ana@example.com"
+
+![From a question to an answer](img/en/story.png)
 
 It must answer **only from sources**, **never invent** a ticket number, **hand the case to a human** when unsure, and be **measured**, not admired.
 
 Repository: github.com/diegoferreiracaetano/dsupport-kt
-
-## How the project is separated
-
-```text
-dsupport-kt/
-├── contract/      shared vocabulary: events, answer          (Kotlin Multiplatform)
-├── core/          ports, agent loop, guards, review, use case (Kotlin Multiplatform)
-├── adapters/      Anthropic client, RAG, JSON files, MCP client
-├── cli/           terminal entry point
-├── eval/          golden dataset, scoring, reports
-├── mcp-orders/    MCP server: order tools
-├── mcp-tickets/   MCP server: ticket tools
-├── server/        Ktor API (Server-Sent Events)
-├── app/           Compose app (desktop and iOS)
-├── config/        agents.json, mcp-servers.json
-└── data/          orders, golden dataset, help-center articles
-```
-
-**1 · `contract`** is the vocabulary. **2 · `core`** is the rules. **3 · `adapters`** is the outside world. **4 · everything else** is an entry point.
-
-> **✅ Rule of thumb**
-> Dependencies point **inward**. The core defines ports (interfaces). Adapters at the edge implement them. The core never imports a provider.
 
 ---
 
@@ -111,11 +80,35 @@ Five roles use a model: the orchestrator and the three specialists, plus the rev
 
 ---
 
+## How the project is separated
+
+```text
+dsupport-kt/
+├── contract/      shared vocabulary: events, answer          (Kotlin Multiplatform)
+├── core/          ports, agent loop, guards, review, use case (Kotlin Multiplatform)
+├── adapters/      Anthropic client, RAG, JSON files, MCP client
+├── cli/           terminal entry point
+├── eval/          golden dataset, scoring, reports
+├── mcp-orders/    MCP server: order tools
+├── mcp-tickets/   MCP server: ticket tools
+├── server/        Ktor API (Server-Sent Events)
+├── app/           Compose app (desktop and iOS)
+├── config/        agents.json, mcp-servers.json
+└── data/          orders, golden dataset, help-center articles
+```
+
+**1 · `contract`** is the vocabulary. **2 · `core`** is the rules. **3 · `adapters`** is the outside world. **4 · everything else** is an entry point.
+
+> **✅ Rule of thumb**
+> Dependencies point **inward**. The core defines ports (interfaces). Adapters at the edge implement them. The core never imports a provider.
+
+---
+
 ## Step by step, with code
 
 ### 01 · Agent loop: the model decides, your code acts
 
-![Agent loop](img/en/stage-1.png)
+![](img/en/panel-1.png)
 
 A model only produces text. The loop lets it ask for help, read the result and try again.
 
@@ -146,6 +139,8 @@ private suspend fun loop(): String {
 
 ### 02 · LLM client: one port, one adapter per provider
 
+![](img/en/panel-2.png)
+
 ```kotlin
 // Port, in the core. No provider import here.
 interface LlmClient {
@@ -157,6 +152,8 @@ interface LlmClient {
 `AnthropicLlmClient` is the adapter. It retries on 429 and 5xx, and fails fast on 400 and 401 because retrying does not fix them.
 
 ### 03 · Tools: functions the model can ask for
+
+![](img/en/panel-3.png)
 
 ```kotlin
 class GetOrderStatusTool(private val orders: OrderGateway) : Tool {
@@ -181,7 +178,7 @@ class GetOrderStatusTool(private val orders: OrderGateway) : Tool {
 
 ### 04 · RAG: answer with a consultation
 
-![RAG](img/en/stage-4.png)
+![](img/en/panel-4.png)
 
 **1** split articles into passages (chunking) · **2** turn passages into vectors (TF-IDF embeddings) · **3** return the closest ones · **4** drop anything below a relevance cut-off.
 
@@ -196,7 +193,7 @@ if (relevant.isEmpty()) return fail("nothing_relevant_found")        // say "not
 
 ### 05 · MCP: tools served by separate programs
 
-![MCP](img/en/stage-5.png)
+![](img/en/panel-5.png)
 
 ```json
 {
@@ -223,7 +220,7 @@ Adding a server is one line of configuration. The agent code does not change.
 
 ### 06 · Multi-agent orchestration
 
-![Orchestrator and specialists](img/en/stage-6.png)
+![](img/en/panel-6.png)
 
 One agent with every tool gets confused. An orchestrator delegates, each specialist sees only its own tools.
 
@@ -241,7 +238,7 @@ A specialist is exposed to the orchestrator **as a tool**, and a fresh agent is 
 
 ### 07 · Guardrails: rules the model cannot skip
 
-![Guardrails](img/en/stage-7.png)
+![](img/en/panel-7.png)
 
 ```kotlin
 class IdentityGate : Hook {
@@ -279,6 +276,8 @@ override suspend fun beforeTool(agent: String, tool: ToolSpec, args: JsonObject)
 
 ### 08 · Structured output and validation
 
+![](img/en/panel-8-1.png)
+
 The final answer is a JSON form. Then plain code checks what a schema cannot.
 
 ```kotlin
@@ -296,6 +295,8 @@ fun problems(answer: SupportAnswer, evidence: List<String>): List<String> = buil
 ```
 
 ### 09 · Producer and reviewer, with a limit
+
+![](img/en/panel-8-2.png)
 
 ```kotlin
 suspend fun answer(question: String): SupportAnswer {
@@ -316,6 +317,8 @@ suspend fun answer(question: String): SupportAnswer {
 
 ### 10 · Observability: a flight recorder
 
+![](img/en/panel-9-1.png)
+
 Every event carries a `runId` and a `parentRunId`, so a tree can be rebuilt:
 
 ```text
@@ -327,6 +330,8 @@ Every event carries a `runId` and a `parentRunId`, so a tree can be rebuilt:
 ```
 
 ### 11 · Evals: an exam with an answer key
+
+![](img/en/panel-9-2.png)
 
 15 golden cases, each run 3 times, because the same code gave different results.
 
@@ -340,6 +345,10 @@ Every event carries a `runId` and a `parentRunId`, so a tree can be rebuilt:
 The evals found what code review never would: two rules that contradicted each other, a reviewer that invented objections, and a routing error that repeated every time. About 30 cents, one afternoon.
 
 ### 12 · Server and app
+
+![](img/en/panel-11.png)
+
+![](img/en/panel-12.png)
 
 ```kotlin
 // POST /chat streams one Server-Sent Events frame per AgentEvent.
