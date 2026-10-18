@@ -1,103 +1,162 @@
-# Multi-agent systems in practice: RAG, MCP, guardrails and evals from scratch in Kotlin
+# Your "AI agent" is mostly if statements (and that is the point)
 
 ![Cover](img/en/cover.png)
 
 > **Title options for Medium (pick one)**
-> 1. *Career:* "I built a multi-agent AI assistant without a framework. Here is what it taught me."
-> 2. *Tech stack:* "RAG, MCP and agents in Kotlin Multiplatform, step by step"
-> 3. *Best practices:* "Guardrails, evals and clean architecture for AI agents: a practical guide"
+> 1. *Provocative:* "Your 'AI agent' is mostly if statements (and that is the point)"
+> 2. *Career:* "I built a multi-agent AI assistant without a framework. Here is what it taught me."
+> 3. *Best practices:* "RAG, MCP and multi-agent in practice: where the model belongs and where plain code must win"
 
-## Introduction
+Everyone is talking about AI. RAG. MCP. Multi-agent. Guardrails. Evals.
 
-Anyone can call a language model. Making it **safe, measurable and replaceable** is the hard part.
+Slides are full of them. Almost nobody shows what they are **in practice**.
 
-Most agent demos work once. Then a model invents a refund policy, reveals data it should not, or costs ten times more than planned. Clean code is how you avoid that: small pieces, clear boundaries, tests that run offline.
+So I built one from scratch in Kotlin, with no framework, and I measured it. This is the honest version: the code, the numbers, and the uncomfortable question at the end.
 
-Kotlin is a good fit today. It is concise, typed, coroutine-friendly for parallel tool calls and, with Kotlin Multiplatform, the same core runs on the server, desktop and iOS. And there is an official MCP SDK for it.
+> **⚠️ The uncomfortable question**
+> If a rule can be written as code, should a model be anywhere near it?
+> Spoiler: in this project, five roles use a model and **fourteen pieces are plain code**.
 
-This guide builds the whole thing in 12 small steps. Every step is a git tag. Beginners get the concept and an analogy. Seniors get the design decisions and the trade-offs.
+---
+
+## The buzzwords, translated
+
+**01 · RAG** is search plus paste. Find the right passage, put it in the prompt, answer from it.
+**02 · MCP** is a plug standard. Tools live in other programs and speak one protocol.
+**03 · Multi-agent** is a function that calls other functions, each with its own prompt and its own tools.
+**04 · Guardrails** are `if` statements the model cannot see.
+**05 · Evals** are unit tests with a sample size, because the model is not deterministic.
+**06 · Agent loop** is a `for` loop with a limit.
+
+Sounds less magical? Good. Magic does not pass a code review.
+
+---
 
 ## The project: DSupport
 
-A customer support assistant. The customer writes:
+A support assistant. The customer writes:
 
 > "My order 1042 has not arrived. My email is ana@example.com"
 
-The assistant must:
+It must answer **only from sources**, **never invent** a ticket number, **hand the case to a human** when unsure, and be **measured**, not admired.
 
-- answer **only from sources** (help-center articles and order data);
-- **hand the case to a human** when it cannot answer safely;
-- **never invent** a ticket number or a policy;
-- be **measured** by an evaluation, not by a good demo.
+Repository: github.com/diegoferreiracaetano/dsupport-kt
 
-No agent framework. Every concept is visible in the code. Repository: github.com/diegoferreiracaetano/dsupport-kt
-
-## Architecture and folder structure
-
-![Orchestrator delegating to specialists](img/en/stage-6.png)
-
-Dependencies point **inward**. The core never imports a provider.
+## How the project is separated
 
 ```text
 dsupport-kt/
-├── contract/      shared vocabulary (events, answer) - Kotlin Multiplatform
-├── core/          ports, agent loop, guards, review, use case - Kotlin Multiplatform
+├── contract/      shared vocabulary: events, answer          (Kotlin Multiplatform)
+├── core/          ports, agent loop, guards, review, use case (Kotlin Multiplatform)
 ├── adapters/      Anthropic client, RAG, JSON files, MCP client
 ├── cli/           terminal entry point
 ├── eval/          golden dataset, scoring, reports
-├── mcp-orders/    MCP server (orders tools)
-├── mcp-tickets/   MCP server (ticket tools)
+├── mcp-orders/    MCP server: order tools
+├── mcp-tickets/   MCP server: ticket tools
 ├── server/        Ktor API (Server-Sent Events)
 ├── app/           Compose app (desktop and iOS)
 ├── config/        agents.json, mcp-servers.json
 └── data/          orders, golden dataset, help-center articles
 ```
 
-Rule of thumb: **ports in the core, adapters at the edge**.
+**1 · `contract`** is the vocabulary. **2 · `core`** is the rules. **3 · `adapters`** is the outside world. **4 · everything else** is an entry point.
 
-## Step by step
+> **✅ Rule of thumb**
+> Dependencies point **inward**. The core defines ports (interfaces). Adapters at the edge implement them. The core never imports a provider.
 
-### Setup
+---
 
-```bash
-git clone https://github.com/diegoferreiracaetano/dsupport-kt
-cd dsupport-kt
-./gradlew test          # runs offline, no API key needed
-```
+## Worth it? Deterministic vs agent
 
-Requirements: JDK 21. The Gradle JVM is pinned in `gradle/gradle-daemon-jvm.properties`.
-
-### Step 1: Agent loop (the model decides, your code acts)
-
-![Agent loop](img/en/stage-1.png)
-
-A model only produces text. The loop lets it ask for help, read the result and try again, until it answers or hits a limit.
+Be honest: a deterministic version is the first thing you should try. Here is what it looks like.
 
 ```kotlin
-// The port every tool implements. The agent cannot tell local from remote.
-interface Tool {
-    val spec: ToolSpec                      // name, description, JSON Schema
-    suspend fun run(args: JsonObject): ToolResult
+// A deterministic support router (illustration, not in the repo)
+fun route(message: String): Intent = when {
+    "refund" in message.lowercase()                       -> Intent.POLICY
+    Regex("""order\s*#?\d+""").containsMatchIn(message)   -> Intent.ORDER
+    else                                                  -> Intent.OTHER
 }
 ```
 
-Always bound the loop (`maxTurns`). A confused model can call tools forever and burn money.
+It is fast, free, testable and 100% predictable. Now feed it what customers actually write:
 
-### Step 2: LLM client (one port, one adapter per provider)
+```text
+"my package never showed up"           -> OTHER   (wrong)
+"where is the thing I bought Monday?"  -> OTHER   (wrong)
+"quero meu dinheiro de volta"          -> OTHER   (wrong)
+```
 
-The agent only knows a port. An adapter translates to the provider.
+![Deterministic vs agent](img/en/compare.png)
+
+> **⚠️ Alert**
+> The deterministic version fails on **language**, not on logic. The agent fails on **trust**. Pick the failure you can live with.
+
+### The decision, as five blocks
+
+**1 · Closed input, known rules?** Use code. Do not pay for a model to read a status enum.
+**2 · Open language, many phrasings?** Use a model to understand it.
+**3 · Cannot be wrong (money, identity, permissions)?** The model **proposes**, code **decides**.
+**4 · Must be auditable?** Code, or a model whose output code validates.
+**5 · Tiny cost or latency budget?** Code.
+
+### Where the model is, and where code is
+
+![Where the model is](img/en/where-ai.png)
+
+Five roles use a model: the orchestrator and the three specialists, plus the reviewer. Fourteen pieces are plain code: `IdentityGate`, `Redaction`, `RedactResults`, `MentionTicket`, `TicketDedup`, `GuardPolicy`, `SupportAnswerValidator`, the review limit and escalation, `MarkdownChunker`, the TF-IDF search, the four tools, the MCP client and servers, `TraceReport` and the eval scorer.
+
+> **💡 Takeaway**
+> Use the model at the **edges** (understanding language, writing the reply). Keep the **middle** deterministic.
+
+---
+
+## Step by step, with code
+
+### 01 · Agent loop: the model decides, your code acts
+
+![Agent loop](img/en/stage-1.png)
+
+A model only produces text. The loop lets it ask for help, read the result and try again.
+
+```kotlin
+private suspend fun loop(): String {
+    repeat(maxTurns) {                                     // always bounded
+        val reply = llm.next(LlmRequest(system, history.toList(), specs))
+        when (reply) {
+            is LlmReply.Text -> return finalAnswer(reply.text)       // done
+            is LlmReply.ToolCalls -> {
+                // the model only ASKS. Several calls in one turn run in parallel
+                val results = coroutineScope {
+                    reply.calls.map { call -> async { execute(call.tool, call.args) } }.awaitAll()
+                }
+                // results go back into the history, in the order they were requested
+                reply.calls.zip(results).forEach { (call, r) ->
+                    history += Message.ToolResult(call.id, call.tool, r.content, r.isError)
+                }
+            }
+        }
+    }
+    return "Turn limit of $maxTurns reached. Escalating to a human agent."
+}
+```
+
+> **⚠️ Alert**
+> No limit means a confused model can call tools forever and burn your budget.
+
+### 02 · LLM client: one port, one adapter per provider
 
 ```kotlin
 // Port, in the core. No provider import here.
 interface LlmClient {
-    suspend fun next(request: LlmRequest): LlmReply                 // text or tool calls
+    suspend fun next(request: LlmRequest): LlmReply          // text or tool calls
     suspend fun structured(request: LlmRequest, schema: OutputSchema): StructuredReply
 }
 ```
 
-`AnthropicLlmClient` is the adapter: it maps messages to JSON and retries on 429 and 5xx. A contract test suite proves any adapter behaves the same.
+`AnthropicLlmClient` is the adapter. It retries on 429 and 5xx, and fails fast on 400 and 401 because retrying does not fix them.
 
-### Step 3: Tools (function calling)
+### 03 · Tools: functions the model can ask for
 
 ```kotlin
 class GetOrderStatusTool(private val orders: OrderGateway) : Tool {
@@ -110,45 +169,63 @@ class GetOrderStatusTool(private val orders: OrderGateway) : Tool {
     override suspend fun run(args: JsonObject): ToolResult {
         val orderId = args.stringArg("order_id") ?: return fail("missing_argument:order_id")
         val email = args.stringArg("email") ?: return fail("missing_argument:email")
-        // A tool never throws: failures come back as a result the model can read.
+        // A tool never throws: the failure comes back as a result the model can read.
         val order = orders.findOwned(orderId, email) ?: return fail("order_not_found_or_email_mismatch")
         return ok("status" to JsonPrimitive(order.status.wire), "eta" to JsonPrimitive(order.eta.toString()))
     }
 }
 ```
 
-The description is part of the prompt. A vague description makes the model pick the wrong tool.
+> **💡 Tip**
+> The description is part of the prompt. A vague description makes the model pick the wrong tool.
 
-### Step 4: RAG (Retrieval-Augmented Generation)
+### 04 · RAG: answer with a consultation
 
 ![RAG](img/en/stage-4.png)
 
-Models invent policies. RAG searches trusted articles first and answers from what it found.
+**1** split articles into passages (chunking) · **2** turn passages into vectors (TF-IDF embeddings) · **3** return the closest ones · **4** drop anything below a relevance cut-off.
 
-1. `MarkdownChunker` splits articles into passages (chunking).
-2. `TfIdfEmbedder` turns passages into vectors (embeddings).
-3. `SearchKbTool` returns the closest passages **above a relevance cut-off (0.25)**.
+```kotlin
+// SearchKbTool: the cut-off is what stops "answering from an unrelated passage"
+val relevant = kb.search(query).filter { it.score >= minScore }    // minScore = 0.25
+if (relevant.isEmpty()) return fail("nothing_relevant_found")        // say "nothing found"
+```
 
-Without the cut-off the search always returns something, and the model answers from an unrelated passage.
+> **⚠️ Alert**
+> Without a cut-off, search always returns *something*, and the model happily answers from it.
 
-### Step 5: MCP (Model Context Protocol)
+### 05 · MCP: tools served by separate programs
 
-Orders and tickets belong to other systems. They run as separate **MCP servers**, using the official Kotlin SDK.
+![MCP](img/en/stage-5.png)
 
 ```json
 {
   "servers": [
-    { "name": "orders",  "command": ["mcp-orders/build/install/mcp-orders/bin/mcp-orders"],  "env": { "DATA_DIR": "data" } },
+    { "name": "orders",  "command": ["mcp-orders/build/install/mcp-orders/bin/mcp-orders"],   "env": { "DATA_DIR": "data" } },
     { "name": "tickets", "command": ["mcp-tickets/build/install/mcp-tickets/bin/mcp-tickets"], "env": { "DATA_DIR": "data" } }
   ]
 }
 ```
 
-Adding a server is a line of configuration. The agent code does not change. A dead server becomes an error result, never a hang.
+```kotlin
+// A remote tool can time out, die or throw. The agent must never hang or crash.
+override suspend fun run(args: JsonObject): ToolResult = try {
+    withTimeout(timeoutMs) { connection.callTool(spec.name, args) }
+} catch (e: Exception) {
+    ToolResult("error: ${e.message}", isError = true)
+}
+```
 
-### Step 6: Multi-agent orchestration
+Adding a server is one line of configuration. The agent code does not change.
 
-One agent with every tool gets confused. An **orchestrator** delegates to specialists, each with a short prompt and only its own tools.
+> **⚠️ Alert**
+> On a stdio MCP server, `stdout` **is** the protocol. One stray `println` corrupts the conversation.
+
+### 06 · Multi-agent orchestration
+
+![Orchestrator and specialists](img/en/stage-6.png)
+
+One agent with every tool gets confused. An orchestrator delegates, each specialist sees only its own tools.
 
 ```json
 {
@@ -160,13 +237,11 @@ One agent with every tool gets confused. An **orchestrator** delegates to specia
 }
 ```
 
-Each specialist is exposed to the orchestrator **as a tool**. Calls in the same turn run in parallel (`async` + `awaitAll`) and keep their order.
+A specialist is exposed to the orchestrator **as a tool**, and a fresh agent is created per call, so histories never mix.
 
-### Step 7: Guardrails
+### 07 · Guardrails: rules the model cannot skip
 
 ![Guardrails](img/en/stage-7.png)
-
-A prompt is a suggestion. Guardrails are deterministic code around the model.
 
 ```kotlin
 class IdentityGate : Hook {
@@ -183,15 +258,65 @@ class IdentityGate : Hook {
 }
 ```
 
-The model cannot see or skip this. If a rule matters, enforce it in code.
+Another one, for a real bug class: two parallel `create_ticket` calls.
 
-### Step 8: Structured output and a reviewer
+```kotlin
+// One open ticket per customer. A creation in flight RESERVES the customer,
+// so two simultaneous calls cannot both pass.
+override suspend fun beforeTool(agent: String, tool: ToolSpec, args: JsonObject): Decision {
+    val email = customerOf(tool, args) ?: return Decision.Allow
+    return lock.withLock {
+        if (email in inFlight) return@withLock Decision.Deny("A ticket for this customer is already being created.")
+        tickets.findOpenByEmail(email)?.let { return@withLock Decision.Deny("Ticket ${it.ticketId} is already open.") }
+        inFlight += email
+        Decision.Allow
+    }
+}
+```
 
-The final answer is a JSON form (`answer`, `intent`, `sources`, `confidence`, `escalated`, `ticket_id`) validated by code: an invented ticket id is rejected. A second model reviews the draft, **at most twice**. At the limit, code (not the model) opens a ticket for a human.
+> **⚠️ Alert**
+> "Please never create duplicate tickets" in the prompt is a wish. The `Mutex` is a guarantee.
 
-### Step 9: Observability and evals
+### 08 · Structured output and validation
 
-Every step is an event with a `runId` and a `parentRunId`, so a trace tree and a cost per agent can be rebuilt:
+The final answer is a JSON form. Then plain code checks what a schema cannot.
+
+```kotlin
+fun problems(answer: SupportAnswer, evidence: List<String>): List<String> = buildList {
+    val results = evidence.joinToString("\n")
+    if (answer.intent !in INTENTS) add("invalid intent: ${answer.intent}")
+    if (answer.confidence !in 0.0..1.0) add("confidence out of range 0..1")
+    answer.ticketId?.let { ticket ->
+        // an invented ticket id is rejected: it must appear in what the tools returned
+        if (ticket !in results) add("ticket $ticket does not appear in the tool results (invented?)")
+    }
+    answer.sources.filter { !results.contains(it, ignoreCase = true) }
+        .forEach { add("source \"$it\" does not appear in the tool results") }
+}
+```
+
+### 09 · Producer and reviewer, with a limit
+
+```kotlin
+suspend fun answer(question: String): SupportAnswer {
+    producer.run(question)
+    for (round in 0..maxRevisions) {                                 // at most 2 revisions
+        val draft = decode(producer.finish(SupportAnswerSchema.output))
+        val problems = validator.problems(draft, producer.evidence)  // cheap, exact: code first
+            .ifEmpty { review(question, draft) }                     // then a model judges the claims
+        if (problems.isEmpty()) return draft
+        producer.followUp("A reviewer rejected your answer. Fix these points:\n" + problems.joinToString("\n"))
+    }
+    return escalate(question)                                        // CODE opens the ticket, not the model
+}
+```
+
+> **💡 Takeaway**
+> The reviewer is a model too. That is why deterministic checks run **first**.
+
+### 10 · Observability: a flight recorder
+
+Every event carries a `runId` and a `parentRunId`, so a tree can be rebuilt:
 
 ```text
 [orchestrator] r1
@@ -201,7 +326,9 @@ Every step is an event with a `runId` and a `parentRunId`, so a trace tree and a
       model call: 400 in / 40 out tokens, 500 ms
 ```
 
-Then **evals**: 15 golden cases, each run 3 times (models are not deterministic), scored by metrics.
+### 11 · Evals: an exam with an answer key
+
+15 golden cases, each run 3 times, because the same code gave different results.
 
 | Metric | First run | After fixes |
 |---|---|---|
@@ -210,9 +337,9 @@ Then **evals**: 15 golden cases, each run 3 times (models are not deterministic)
 | Escalation precision | 80% | 100% |
 | Review fallback | 9% | 0% |
 
-The evals found problems I would never find by reading code: two rules that contradicted each other, a reviewer that invented objections and a deterministic routing error. Total cost: about 30 cents.
+The evals found what code review never would: two rules that contradicted each other, a reviewer that invented objections, and a routing error that repeated every time. About 30 cents, one afternoon.
 
-### Step 10: Server and app
+### 12 · Server and app
 
 ```kotlin
 // POST /chat streams one Server-Sent Events frame per AgentEvent.
@@ -229,9 +356,11 @@ post("/chat") {
 
 The API key lives only on the server. The Compose app draws the conversation, the sources, an escalation badge and the live trace.
 
+---
+
 ## Tests and containerization
 
-One test class per production class, doubles at the ports, no API calls:
+One test class per production class. Doubles at the ports. **Zero API calls.**
 
 ```kotlin
 @Test
@@ -243,7 +372,7 @@ fun `given a malformed email when checking an order tool then should deny`() = r
 }
 ```
 
-A multi-stage `Dockerfile` for production (build with the JDK, run with the JRE):
+A multi-stage `Dockerfile` (build with the JDK, run with the JRE):
 
 ```dockerfile
 # Stage 1: build the distribution with the full JDK
@@ -263,21 +392,21 @@ EXPOSE 8080
 CMD ["bin/server"]
 ```
 
-```bash
-docker build -t dsupport .
-docker run -p 8080:8080 -e ANTHROPIC_API_KEY dsupport
-```
+---
 
-## When not to use multiple agents
+## The price of "multi"
 
-It is not free. One delayed-order question costs **12 model calls**. Use one agent with tools when the task is small. Split into specialists when prompts and toolsets grow and the roles are clearly different.
+> **⚠️ Alert**
+> One delayed-order question cost **12 model calls**, about 15,000 input tokens and 10 seconds. Multi-agent is not free.
+
+Use one agent with tools when the task is small. Split into specialists only when prompts and toolsets grow and the roles are clearly different.
 
 ## Conclusion
 
-The model decides, your code acts and checks. Rules live in code. Quality is measured. Providers are replaceable.
+The model decides. Your code acts, validates and escalates. Rules live in code. Quality is measured. Providers are replaceable.
 
-**Your turn:**
+**Your turn**
 
-- Which of these concepts is new to you: RAG, MCP, guardrails or evals? Tell me in the comments.
-- If you want a deep dive on any step, say which one.
-- Share this with someone building agents. A star on the repository helps too: github.com/diegoferreiracaetano/dsupport-kt
+**1** · Which rule in your own project could be code instead of a prompt? Tell me in the comments.
+**2** · Disagree that most of an agent should be deterministic? I want to hear the counter-example.
+**3** · Share this with someone about to build "an AI agent". A star on the repo helps: github.com/diegoferreiracaetano/dsupport-kt
