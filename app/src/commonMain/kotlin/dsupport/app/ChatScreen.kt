@@ -337,7 +337,7 @@ private fun TracePanel(state: ChatState, strings: Strings, modifier: Modifier) {
                 Modifier.weight(1f).fillMaxWidth().clip(Radius).background(palette.background).outline(palette.border)
                     .verticalScroll(rememberScrollState()).padding(14.dp),
             ) {
-                Text(report.tree(events), fontFamily = Mono, fontSize = 11.sp, lineHeight = 17.sp, color = palette.text)
+                Text(report.tree(events), fontFamily = mono(), fontSize = 11.sp, lineHeight = 17.sp, color = palette.text)
             }
         }
     }

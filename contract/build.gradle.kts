@@ -8,6 +8,9 @@ plugins {
 kotlin {
     jvmToolchain(21)
     jvm()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs { browser { testTask { enabled = false } } }
 

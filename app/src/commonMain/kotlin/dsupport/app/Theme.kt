@@ -15,7 +15,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
+import org.jetbrains.compose.resources.Font
+import dsupport.app.generated.resources.Res
+import dsupport.app.generated.resources.geist_medium
+import dsupport.app.generated.resources.geist_mono_regular
+import dsupport.app.generated.resources.geist_regular
+import dsupport.app.generated.resources.geist_semibold
 import androidx.compose.ui.unit.sp
 
 @Immutable
@@ -69,20 +74,25 @@ private val DarkPalette = Palette(
 
 val Radius = RoundedCornerShape(12.dp)
 
-private val Sans = FontFamily(
-    Font("fonts/Geist-Regular.ttf", FontWeight.Normal),
-    Font("fonts/Geist-Medium.ttf", FontWeight.Medium),
-    Font("fonts/Geist-SemiBold.ttf", FontWeight.SemiBold),
+@Composable
+private fun sans() = FontFamily(
+    Font(Res.font.geist_regular, FontWeight.Normal),
+    Font(Res.font.geist_medium, FontWeight.Medium),
+    Font(Res.font.geist_semibold, FontWeight.SemiBold),
 )
 
-val Mono = FontFamily(Font("fonts/GeistMono-Regular.ttf", FontWeight.Normal))
+@Composable
+fun mono() = FontFamily(Font(Res.font.geist_mono_regular, FontWeight.Normal))
 
 private val LocalPalette = staticCompositionLocalOf { LightPalette }
 
 val palette: Palette
     @Composable get() = LocalPalette.current
 
-private fun typography() = Typography(
+@Composable
+private fun typography(): Typography {
+    val Sans = sans()
+    return Typography(
     headlineSmall = TextStyle(fontFamily = Sans, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 34.sp, letterSpacing = (-0.6).sp),
     titleMedium = TextStyle(fontFamily = Sans, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 20.sp),
     bodyLarge = TextStyle(fontFamily = Sans, fontWeight = FontWeight.Normal, fontSize = 15.sp, lineHeight = 23.sp),
@@ -90,7 +100,8 @@ private fun typography() = Typography(
     bodySmall = TextStyle(fontFamily = Sans, fontWeight = FontWeight.Normal, fontSize = 13.sp, lineHeight = 18.sp),
     labelMedium = TextStyle(fontFamily = Sans, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 16.sp),
     labelSmall = TextStyle(fontFamily = Sans, fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 16.sp),
-)
+    )
+}
 
 private fun Palette.scheme(dark: Boolean) = (if (dark) darkColorScheme() else lightColorScheme()).copy(
     primary = accent,
