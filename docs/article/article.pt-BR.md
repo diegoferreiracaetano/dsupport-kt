@@ -1,4 +1,4 @@
-# Construindo à mão um assistente de suporte multiagente em Kotlin: o que aprendi
+# Multiagentes na prática: RAG, MCP, guardrails e evals do zero em Kotlin
 
 [English](article.md) | [Português](article.pt-BR.md)
 

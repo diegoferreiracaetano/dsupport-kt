@@ -1,4 +1,4 @@
-# Building a multi-agent support assistant by hand in Kotlin: what I learned
+# Multi-agent systems in practice: RAG, MCP, guardrails and evals from scratch in Kotlin
 
 [English](article.md) | [Português](article.pt-BR.md)
 
