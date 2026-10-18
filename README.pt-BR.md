@@ -4,6 +4,12 @@
 
 [![CI](https://github.com/diegoferreiracaetano/dsupport-kt/actions/workflows/ci.yml/badge.svg)](https://github.com/diegoferreiracaetano/dsupport-kt/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+## Demonstração
+
+<p align="center"><img src="docs/demo/demo.gif" alt="DSupport rodando em um iPhone" width="300"></p>
+
+O app iOS conversando com o servidor, com o rastro ao vivo. O vídeo está acelerado em 2x: [docs/demo/demo.mp4](docs/demo/demo.mp4).
+
 Um assistente de suporte ao cliente multiagente, construído à mão em Kotlin Multiplatform, sem framework de agentes: um orquestrador delega a especialistas, responde só com base em fontes e passa o caso a um humano quando não consegue responder com segurança. Ele é medido por uma avaliação que roda a cada mudança.
 
 - **Responde com fontes.** Uma busca na central de ajuda (RAG) sustenta as respostas de política; os dados de pedido vêm de ferramentas. Nada é inventado: todo ticket e toda fonte numa resposta é conferido contra o que as ferramentas devolveram.
