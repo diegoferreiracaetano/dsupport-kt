@@ -32,7 +32,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -74,6 +76,8 @@ fun ChatScreen(
     onSend: (String) -> Unit,
     onLanguage: (Language) -> Unit = {},
     dark: Boolean = isSystemInDarkTheme(),
+    serverAddress: String = "",
+    onServerAddress: (String) -> Unit = {},
 ) {
     val strings = Strings.of(state.language)
     DSupportTheme(dark) {
@@ -84,12 +88,12 @@ fun ChatScreen(
                 val toggle = { traceVisible = !traceVisible }
                 if (compact) {
                     Box(Modifier.fillMaxSize()) {
-                        Conversation(state, strings, traceVisible, onSend, onLanguage, toggle, Modifier.fillMaxSize())
+                        Conversation(state, strings, traceVisible, onSend, onLanguage, toggle, serverAddress, onServerAddress, Modifier.fillMaxSize())
                         if (traceVisible) TracePanel(state, strings, Modifier.fillMaxSize(), onClose = toggle)
                     }
                 } else {
                     Row(Modifier.fillMaxSize()) {
-                        Conversation(state, strings, traceVisible, onSend, onLanguage, toggle, Modifier.weight(1f).fillMaxHeight())
+                        Conversation(state, strings, traceVisible, onSend, onLanguage, toggle, serverAddress, onServerAddress, Modifier.weight(1f).fillMaxHeight())
                         if (traceVisible) {
                             Box(Modifier.width(1.dp).fillMaxHeight().background(palette.border))
                             TracePanel(state, strings, Modifier.width(TraceWidth).fillMaxHeight())
@@ -109,10 +113,12 @@ private fun Conversation(
     onSend: (String) -> Unit,
     onLanguage: (Language) -> Unit,
     onToggleTrace: () -> Unit,
+    serverAddress: String,
+    onServerAddress: (String) -> Unit,
     modifier: Modifier,
 ) {
     Column(modifier) {
-        Header(state.language, strings, traceVisible, onLanguage, onToggleTrace)
+        Header(state.language, strings, traceVisible, onLanguage, onToggleTrace, serverAddress, onServerAddress)
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
             if (state.messages.isEmpty() && !state.running) {
                 EmptyState(strings, onSend, Modifier.widthIn(max = ContentWidth).padding(horizontal = 24.dp))
@@ -125,14 +131,32 @@ private fun Conversation(
 }
 
 @Composable
-private fun Header(language: Language, strings: Strings, traceVisible: Boolean, onLanguage: (Language) -> Unit, onToggleTrace: () -> Unit) {
+private fun Header(
+    language: Language,
+    strings: Strings,
+    traceVisible: Boolean,
+    onLanguage: (Language) -> Unit,
+    onToggleTrace: () -> Unit,
+    serverAddress: String,
+    onServerAddress: (String) -> Unit,
+) {
+    var editing by remember { mutableStateOf(false) }
+    if (editing) ServerDialog(serverAddress, strings, { editing = false }, onServerAddress)
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(strings.title, style = MaterialTheme.typography.titleMedium, color = palette.text)
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (serverAddress.isNotEmpty()) {
+                Text(
+                    strings.server,
+                    Modifier.clip(Radius).clickable { editing = true }.padding(horizontal = 8.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = palette.textMuted,
+                )
+            }
             Text(
                 if (traceVisible) strings.hideTrace else strings.showTrace,
                 Modifier.clip(Radius).clickable(onClick = onToggleTrace).padding(horizontal = 8.dp, vertical = 6.dp),
@@ -374,4 +398,21 @@ private fun Stat(value: String, label: String, modifier: Modifier) {
         Text(value, style = MaterialTheme.typography.titleMedium, color = palette.text)
         Text(label, style = MaterialTheme.typography.labelSmall, color = palette.textMuted)
     }
+}
+
+@Composable
+private fun ServerDialog(current: String, strings: Strings, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    var draft by remember { mutableStateOf(current) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(strings.server) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(value = draft, onValueChange = { draft = it }, singleLine = true, shape = Radius)
+                Text(strings.serverHint, style = MaterialTheme.typography.bodySmall, color = palette.textMuted)
+            }
+        },
+        confirmButton = { TextButton(onClick = { onSave(draft); onDismiss() }) { Text(strings.save) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(strings.cancel) } },
+    )
 }

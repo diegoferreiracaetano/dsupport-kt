@@ -21,6 +21,7 @@ targets:
         UILaunchScreen: {}
         CADisableMinimumFrameDurationOnPhone: true
         DSupportServer: "http://localhost:8080"
+        NSLocalNetworkUsageDescription: "DSupport connects to the assistant server on your local network."
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         UISupportedInterfaceOrientations:

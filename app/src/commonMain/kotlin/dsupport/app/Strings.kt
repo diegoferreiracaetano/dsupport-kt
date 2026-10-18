@@ -30,6 +30,10 @@ data class Strings(
     val hideTrace: String,
     val showTrace: String,
     val traceHint: String,
+    val server: String,
+    val serverHint: String,
+    val save: String,
+    val cancel: String,
     private val intents: Map<String, String>,
 ) {
     fun intent(name: String): String = intents[name] ?: name
@@ -59,6 +63,10 @@ data class Strings(
             hideTrace = "Ocultar rastro",
             showTrace = "Mostrar rastro",
             traceHint = "Faça uma pergunta para ver, passo a passo, o que o assistente fez.",
+            server = "Servidor",
+            serverHint = "Endereço do servidor, por exemplo http://192.168.0.10:8080",
+            save = "Salvar",
+            cancel = "Cancelar",
             intents = mapOf("policy" to "política", "order" to "pedido", "return" to "devolução", "complaint" to "reclamação", "other" to "outro"),
         )
 
@@ -86,6 +94,10 @@ data class Strings(
             hideTrace = "Hide trace",
             showTrace = "Show trace",
             traceHint = "Ask a question to see, step by step, what the assistant did.",
+            server = "Server",
+            serverHint = "Server address, for example http://192.168.0.10:8080",
+            save = "Save",
+            cancel = "Cancel",
             intents = emptyMap(),
         )
 
