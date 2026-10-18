@@ -16,4 +16,5 @@ data class GoldenCase(
     @SerialName("must_contain") val mustContain: List<String> = emptyList(),
     @SerialName("must_not_contain") val mustNotContain: List<String> = emptyList(),
     @SerialName("expected_sources") val expectedSources: List<String> = emptyList(),
+    val note: String? = null,
 )

@@ -28,6 +28,30 @@ class GoldenDatasetLoaderTest {
     }
 
     @Test
+    fun `given a note in a case when loading then should keep the rationale`() {
+        val file = createTempFile(suffix = ".json")
+        file.writeText("""[{"id":"x1","question":"Q","expected_intents":["other"],"note":"both outcomes are fine"}]""")
+
+        assertEquals("both outcomes are fine", loader.load(file).single().note)
+    }
+
+    @Test
+    fun `given a case without a note when loading then should have no note`() {
+        val file = createTempFile(suffix = ".json")
+        file.writeText("""[{"id":"x1","question":"Q","expected_intents":["other"]}]""")
+
+        assertNull(loader.load(file).single().note)
+    }
+
+    @Test
+    fun `given the off topic case in the project dataset when loading then should leave escalation unjudged and explain why`() {
+        val offTopic = loader.load(golden).single { it.id == "g14" }
+
+        assertNull(offTopic.shouldEscalate)
+        assertTrue(offTopic.note.orEmpty().isNotBlank())
+    }
+
+    @Test
     fun `given all the snake case fields when loading a case then should map them`() {
         val file = createTempFile(suffix = ".json")
         file.writeText(

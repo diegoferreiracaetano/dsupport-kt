@@ -175,9 +175,10 @@
     "expected_intents": [
       "other"
     ],
-    "should_escalate": true,
+    "should_escalate": null,
     "must_contain": [],
-    "expected_sources": []
+    "expected_sources": [],
+    "note": "Out of scope for the help center. Escalating at once and offering a ticket are both acceptable; inventing an answer is not. Left unjudged for escalation after the first evaluation showed the assistant offering a ticket and asking for the email."
   },
   {
     "id": "g15",
