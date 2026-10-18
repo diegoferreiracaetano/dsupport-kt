@@ -23,6 +23,13 @@ data class Strings(
     val outLabel: String,
     val modelCalls: String,
     val language: String,
+    val greeting: String,
+    val suggestions: List<String>,
+    val ticketOpened: String,
+    val errorTitle: String,
+    val hideTrace: String,
+    val showTrace: String,
+    val traceHint: String,
     private val intents: Map<String, String>,
 ) {
     fun intent(name: String): String = intents[name] ?: name
@@ -43,8 +50,15 @@ data class Strings(
             tokens = "Tokens",
             inLabel = "entrada",
             outLabel = "saída",
-            modelCalls = "chamadas ao modelo",
+            modelCalls = "chamadas",
             language = "Idioma",
+            greeting = "Como posso ajudar?",
+            suggestions = listOf("Onde está o meu pedido 1001? Meu e-mail é ana@example.com", "Como faço uma devolução?", "Qual é a política de reembolso?"),
+            ticketOpened = "Ticket aberto. Uma pessoa vai acompanhar o seu caso.",
+            errorTitle = "Algo deu errado",
+            hideTrace = "Ocultar rastro",
+            showTrace = "Mostrar rastro",
+            traceHint = "Faça uma pergunta para ver, passo a passo, o que o assistente fez.",
             intents = mapOf("policy" to "política", "order" to "pedido", "return" to "devolução", "complaint" to "reclamação", "other" to "outro"),
         )
 
@@ -63,8 +77,15 @@ data class Strings(
             tokens = "Tokens",
             inLabel = "in",
             outLabel = "out",
-            modelCalls = "model calls",
+            modelCalls = "calls",
             language = "Language",
+            greeting = "How can I help?",
+            suggestions = listOf("Where is my order 1001? My email is ana@example.com", "How do I return an item?", "What is the refund policy?"),
+            ticketOpened = "Ticket opened. A person will follow your case.",
+            errorTitle = "Something went wrong",
+            hideTrace = "Hide trace",
+            showTrace = "Show trace",
+            traceHint = "Ask a question to see, step by step, what the assistant did.",
             intents = emptyMap(),
         )
 

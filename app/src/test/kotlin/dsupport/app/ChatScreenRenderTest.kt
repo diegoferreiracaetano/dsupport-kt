@@ -36,8 +36,8 @@ class ChatScreenRenderTest {
         events,
     )
 
-    private fun render(state: ChatState, name: String): Path {
-        val scene = ImageComposeScene(width = 1100, height = 720, density = Density(1f)) { ChatScreen(state, {}) }
+    private fun render(state: ChatState, name: String, dark: Boolean = false): Path {
+        val scene = ImageComposeScene(width = 1100, height = 720, density = Density(1f)) { ChatScreen(state, {}, {}, dark) }
         val bytes = scene.render().encodeToData(EncodedImageFormat.PNG)!!.bytes
         scene.close()
         val file = Path.of("build", "render", "$name.png")
@@ -71,5 +71,17 @@ class ChatScreenRenderTest {
         val file = render(state, "running")
 
         assertTrue(Files.size(file) > 5_000)
+    }
+
+    @Test
+    fun `given the dark theme when rendering the screen then should draw an image`() {
+        val state = ChatState(messages = listOf(ChatMessage.Customer("Meu pedido 1001 atrasou"), reply))
+
+        assertTrue(Files.size(render(state, "dark", dark = true)) > 5_000)
+    }
+
+    @Test
+    fun `given a new chat when rendering the screen then should draw the empty state`() {
+        assertTrue(Files.size(render(ChatState(), "empty")) > 5_000)
     }
 }
