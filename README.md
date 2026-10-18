@@ -106,7 +106,7 @@ MCP servers (stage 5) are used by setting `MCP_SERVERS_FILE=config/mcp-servers.j
 
 The golden set is small (15 cases): it proves the method, not production readiness.
 
-The teaching deck is [docs/presentation/index.html](docs/presentation/index.html) (open it in a browser, EN/PT toggle) the illustrated, step-by-step article "Multi-agent systems in practice" is [docs/article/index.html](docs/article/index.html) and the text draft is [docs/article/article.md](docs/article/article.md).
+The teaching deck is [docs/presentation/index.html](docs/presentation/index.html) (open it in a browser, EN/PT toggle), and the article **"AI in Practice: RAG, MCP and Multi-Agent Systems in Kotlin"** is on [dev.to](https://dev.to/diego_f_caetano/ai-in-practice-rag-mcp-and-multi-agent-systems-in-kotlin-without-magic-frameworks-564o) (source in [docs/article](docs/article/article-multi-agents-kotlin.md)).
 
 ## Run it
 

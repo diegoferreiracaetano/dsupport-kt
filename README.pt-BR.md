@@ -106,7 +106,7 @@ Os servidores MCP (etapa 5) são usados definindo `MCP_SERVERS_FILE=config/mcp-s
 
 O conjunto de referência é pequeno (15 casos): prova o método, não que está pronto para produção.
 
-A apresentação didática é [docs/presentation/index.html](docs/presentation/index.html) (abra no navegador, alterna EN/PT) o artigo ilustrado e passo a passo "Multiagentes na prática" é [docs/article/index.html](docs/article/index.html) e o rascunho em texto é [docs/article/article.pt-BR.md](docs/article/article.pt-BR.md).
+A apresentação didática é [docs/presentation/index.html](docs/presentation/index.html) (abra no navegador, alterna EN/PT), e o artigo **"AI in Practice: RAG, MCP and Multi-Agent Systems in Kotlin"** está no [dev.to](https://dev.to/diego_f_caetano/ai-in-practice-rag-mcp-and-multi-agent-systems-in-kotlin-without-magic-frameworks-564o) (versão em português em [docs/article](docs/article/artigo-multiagentes-kotlin.md)).
 
 ## Como rodar
 
