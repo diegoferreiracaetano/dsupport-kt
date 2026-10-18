@@ -35,7 +35,7 @@ Modules, each depending only on the ones to its right (an arrow means "depends o
 flowchart LR
   cli --> adapters --> core --> contract
   eval --> cli
-  mcp["mcp-orders, mcp-tickets (stage 5)"] --> adapters
+  mcp["mcp-orders, mcp-tickets"] --> adapters
 ```
 
 - `contract`: types shared by every client (`SupportAnswer`, `AgentEvent`), multiplatform.
@@ -78,7 +78,7 @@ Each stage is a git tag (`git checkout etapa-4`) and has a guide in [docs/stages
 | `etapa-8.2` | **Producer–reviewer loop** | a second pair of eyes, with a limit |
 | `etapa-9.2` | **Evals** | an exam with an answer key |
 
-Still to come: stage 5 (**MCP**, the Model Context Protocol, for order and ticket tools in separate servers), stage 9.1 (**observability**: trace tree and cost per agent) and phase 2 (a Ktor server and a small Compose app for real interactions).
+MCP servers (stage 5) are used by setting `MCP_SERVERS_FILE=config/mcp-servers.json` after `./gradlew installDist`; the terminal prints the trace tree and cost per agent (stage 9.1). Still to come: phase 2 (a Ktor server and a small Compose app for real interactions).
 
 ## Results
 

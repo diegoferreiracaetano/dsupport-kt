@@ -1,0 +1,6 @@
+{
+  "servers": [
+    { "name": "orders", "command": ["mcp-orders/build/install/mcp-orders/bin/mcp-orders"], "env": { "DATA_DIR": "data" } },
+    { "name": "tickets", "command": ["mcp-tickets/build/install/mcp-tickets/bin/mcp-tickets"], "env": { "DATA_DIR": "data" } }
+  ]
+}

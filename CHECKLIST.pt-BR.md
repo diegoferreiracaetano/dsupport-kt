@@ -60,10 +60,10 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 
 ### E5 — MCP com o SDK oficial [D] · tag `etapa-5`
 - [x] Guia `docs/stages/5-mcp.pt-BR.md` (versão e transporte confirmados nos fontes do SDK)
-- [ ] `McpToolServer` e os servidores `mcp-orders` e `mcp-tickets`
-- [ ] `McpConnector` (stdio) e `McpToolProvider` lendo `config/mcp-servers.json`, com tempo limite por chamada
-- [ ] Servidor que cai ou não sobe devolve erro sem derrubar o agente
-- [ ] Prova do critério: adicionar o servidor de tickets só editando a configuração
+- [x] `McpToolServer` e os servidores `mcp-orders` e `mcp-tickets`
+- [x] `McpConnector` (stdio) e `McpToolProvider` lendo `config/mcp-servers.json`, com tempo limite por chamada
+- [x] Servidor que cai ou não sobe devolve erro sem derrubar o agente
+- [x] Prova do critério: adicionar o servidor de tickets só editando a configuração
 
 ### E6 — Multi-agentes e paralelismo [D, feita pela Claude a pedido do Diego] · tag `etapa-6`
 - [x] Guia `docs/stages/6-multi-agents.pt-BR.md`
@@ -72,8 +72,8 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 - [x] Prompts neutros em inglês; orquestrador sem ferramenta de dados
 - [x] `DSupportAssembly`: guardas na ordem (`TicketDedup` por último) e `GuardPolicy` na montagem
 - [x] Dois `create_ticket` paralelos geram um ticket só (de ponta a ponta, inclusive com paralelismo real)
-- [ ] `REFERENCE_DATE` suportada (feito no `cli`; falta no `mcp-orders`, na E5)
-- [ ] Primeira execução de ponta a ponta com a API (`:cli:run`)
+- [x] `REFERENCE_DATE` suportada (no `cli` e no `mcp-orders`)
+- [x] Primeira execução de ponta a ponta com a API (`:cli:run`)
 
 ### E7 — Guardas [M] · tag `etapa-7`
 - [x] `IdentityGate`, `Redaction`, `RedactResults`, `TicketDedup`, `MentionTicket` (ligadas na montagem, na E6)
@@ -104,7 +104,7 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 
 ### E10 — Fechamento da fase 1 [M] · tag `fase-1`
 - [x] README com diagrama, como rodar, métricas e um trecho de trace (o ADR 0002 vem com a etapa 5)
-- [ ] ADRs 0001 a 0003
+- [x] ADRs 0001 a 0003
 - [ ] Critérios de sucesso da spec conferidos e todas as tags existem
 
 ---

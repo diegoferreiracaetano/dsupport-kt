@@ -9,6 +9,7 @@ class RuntimeSettings(
     val dataDir: Path,
     val agentsFile: Path,
     val referenceDate: LocalDate?,
+    val mcpServersFile: Path? = null,
 )
 
 /** Reads the settings from environment variables. Optional ones that are blank count as not set. */
@@ -23,6 +24,7 @@ class SettingsReader {
             dataDir = Path.of(env.value("DATA_DIR") ?: "data"),
             agentsFile = Path.of("config", "agents.json"),
             referenceDate = referenceDate ?: env.value("REFERENCE_DATE")?.let(::parseDate),
+            mcpServersFile = env.value("MCP_SERVERS_FILE")?.let { Path.of(it) },
         )
     }
 

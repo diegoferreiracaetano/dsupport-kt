@@ -67,4 +67,16 @@ class SettingsReaderTest {
 
         assertEquals(LocalDate(2026, 10, 15), settings.referenceDate)
     }
+
+    @Test
+    fun `given the mcp servers variable when reading then should expose the configuration file`() {
+        val settings = reader.read(minimal + ("MCP_SERVERS_FILE" to "config/mcp-servers.json"))
+
+        assertEquals(Path.of("config", "mcp-servers.json"), settings.mcpServersFile)
+    }
+
+    @Test
+    fun `given no mcp servers variable when reading then should keep the tools local`() {
+        assertNull(reader.read(minimal).mcpServersFile)
+    }
 }

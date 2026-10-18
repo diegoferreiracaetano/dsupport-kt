@@ -1,12 +1,14 @@
 package dsupport.cli
 
 import dsupport.adapters.llm.AnthropicLlmClient
+import dsupport.adapters.mcp.McpToolProvider
 import dsupport.adapters.persistence.JsonOrderGateway
 import dsupport.adapters.persistence.JsonTicketGateway
 import dsupport.adapters.rag.KbLoader
 import dsupport.adapters.rag.TfIdfEmbedder
 import dsupport.adapters.rag.VectorKnowledgeBase
 import dsupport.core.agent.AgentsConfig
+import dsupport.core.mcp.McpServersConfig
 import dsupport.core.tools.CreateTicketTool
 import dsupport.core.tools.GetOrderStatusTool
 import dsupport.core.tools.LocalToolProvider
@@ -27,10 +29,14 @@ class DSupportRuntime(private val settings: RuntimeSettings, private val http: H
         val orders = JsonOrderGateway(settings.dataDir.resolve("orders.json"))
         val tickets = JsonTicketGateway(ticketsFile)
         val orderStatus = settings.referenceDate?.let { date -> GetOrderStatusTool(orders) { date } } ?: GetOrderStatusTool(orders)
-        val tools = LocalToolProvider(
-            listOf(SearchKbTool(knowledgeBase), orderStatus, TrackShipmentTool(orders), CreateTicketTool(tickets)),
+        val providers = settings.mcpServersFile?.let { file ->
+            val remote = McpToolProvider(Json.decodeFromString(McpServersConfig.serializer(), Files.readString(file)))
+            Runtime.getRuntime().addShutdownHook(Thread { remote.close() })
+            listOf(LocalToolProvider(listOf(SearchKbTool(knowledgeBase))), remote)
+        } ?: listOf(
+            LocalToolProvider(listOf(SearchKbTool(knowledgeBase), orderStatus, TrackShipmentTool(orders), CreateTicketTool(tickets))),
         )
         val agents = Json.decodeFromString(AgentsConfig.serializer(), Files.readString(settings.agentsFile))
-        return DSupportAssembly(llm, listOf(tools), agents, tickets).answerCustomer()
+        return DSupportAssembly(llm, providers, agents, tickets).answerCustomer()
     }
 }

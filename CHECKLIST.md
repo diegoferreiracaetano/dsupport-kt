@@ -60,10 +60,10 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 
 ### E5 — MCP with the official SDK [D] · tag `etapa-5`
 - [x] Guide `docs/stages/5-mcp.md` (version and transport confirmed in the SDK sources)
-- [ ] `McpToolServer` and the `mcp-orders` and `mcp-tickets` servers
-- [ ] `McpConnector` (stdio) and `McpToolProvider` reading `config/mcp-servers.json`, with a per-call timeout
-- [ ] A server that crashes or fails to start returns an error without taking the agent down
-- [ ] Proof of the criterion: add the tickets server by editing the configuration only
+- [x] `McpToolServer` and the `mcp-orders` and `mcp-tickets` servers
+- [x] `McpConnector` (stdio) and `McpToolProvider` reading `config/mcp-servers.json`, with a per-call timeout
+- [x] A server that crashes or fails to start returns an error without taking the agent down
+- [x] Proof of the criterion: add the tickets server by editing the configuration only
 
 ### E6 — Multi-agent and parallelism [D, done by Claude at Diego's request] · tag `etapa-6`
 - [x] Guide `docs/stages/6-multi-agents.md`
@@ -72,8 +72,8 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 - [x] Neutral prompts in English; orchestrator without data tools
 - [x] `DSupportAssembly`: guards in order (`TicketDedup` last) and `GuardPolicy` at assembly
 - [x] Two parallel `create_ticket` calls produce one ticket (end to end, including real parallelism)
-- [ ] `REFERENCE_DATE` supported (done in the `cli`; still to do in `mcp-orders`, in E5)
-- [ ] First end-to-end run against the API (`:cli:run`)
+- [x] `REFERENCE_DATE` supported (in the `cli` and in `mcp-orders`)
+- [x] First end-to-end run against the API (`:cli:run`)
 
 ### E7 — Guards [M] · tag `etapa-7`
 - [x] `IdentityGate`, `Redaction`, `RedactResults`, `TicketDedup`, `MentionTicket` (wired in at assembly in E6)
@@ -104,7 +104,7 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 
 ### E10 — Phase 1 wrap-up [M] · tag `fase-1`
 - [x] README with a diagram, how to run, metrics and a trace excerpt (ADR 0002 comes with stage 5)
-- [ ] ADRs 0001 to 0003
+- [x] ADRs 0001 to 0003
 - [ ] Spec success criteria checked and every tag exists
 
 ---
