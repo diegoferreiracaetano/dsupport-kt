@@ -22,7 +22,11 @@ object SupportAnswerSchema {
                     put("answer", property("string", "Text for the customer: short, friendly, in English."))
                     put(
                         "intent",
-                        property("string", "Main intent of the customer message.").withEnum(INTENTS),
+                        property(
+                            "string",
+                            "Main intent of the customer message. policy: a help-center topic. order: about a specific order. " +
+                                "return. complaint. other: anything outside the help-center topics.",
+                        ).withEnum(INTENTS),
                     )
                     put(
                         "sources",
@@ -32,7 +36,14 @@ object SupportAnswerSchema {
                             put("description", "Titles of the help articles used, exactly as the specialists returned them. Empty if none.")
                         },
                     )
-                    put("confidence", property("number", "From 0 to 1: how well the answer is supported by the specialist results."))
+                    put(
+                        "confidence",
+                        property(
+                            "number",
+                            "From 0 to 1: how confident you are that this answer is correct and helpful for what the customer asked. " +
+                                "Asking the customer for a missing detail is a confident answer.",
+                        ),
+                    )
                     put("escalated", property("boolean", "True if a ticket for a human agent was opened or already existed."))
                     put(
                         "ticket_id",

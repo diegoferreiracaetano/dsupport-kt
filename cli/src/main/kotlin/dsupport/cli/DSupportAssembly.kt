@@ -34,12 +34,14 @@ private val SPECIALISTS = listOf(
     Specialist(
         "knowledge",
         KNOWLEDGE_PROMPT,
-        "Policy specialist: returns, refunds, shipping, payments, warranty, cancellation, privacy and the account.",
+        "Help-center specialist: policies and how things work (returns, refunds, shipping, payments, warranty, " +
+            "cancellation, privacy, the account), including how-to questions such as where to find a tracking code.",
     ),
     Specialist(
         "orders",
         ORDERS_PROMPT,
-        "Order specialist: status, delays and tracking. The task must include the order number and the customer email.",
+        "Order specialist: status, delays and tracking of one specific order. " +
+            "The task must include the order number and the customer email.",
     ),
     Specialist(
         "escalation",

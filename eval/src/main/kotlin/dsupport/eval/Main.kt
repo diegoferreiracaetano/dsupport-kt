@@ -31,6 +31,8 @@ suspend fun main(args: Array<String>) {
         exitProcess(1)
     }
     val cases = GoldenDatasetLoader().load(settings.dataDir.resolve("golden.json"))
+    val planned = cases.count { arguments.caseIds.isEmpty() || it.id in arguments.caseIds } * arguments.repeat
+    println("Planned: ${CostEstimate().describe(planned, settings.modelId)}")
     val http = HttpClient(CIO) { install(HttpTimeout) { requestTimeoutMillis = REQUEST_TIMEOUT_MS } }
     try {
         val progress = ProgressLine()

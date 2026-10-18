@@ -49,6 +49,20 @@ class SupportAnswerSchemaTest {
     }
 
     @Test
+    fun `given the confidence property when reading its description then should say that asking the customer for a detail is a confident answer`() {
+        val description = properties.getValue("confidence").jsonObject.getValue("description").jsonPrimitive.content
+
+        assertTrue("asking the customer" in description.lowercase() && "confident" in description.lowercase())
+    }
+
+    @Test
+    fun `given the intent property when reading its description then should define other as outside the help center topics`() {
+        val description = properties.getValue("intent").jsonObject.getValue("description").jsonPrimitive.content
+
+        assertTrue("other" in description && "outside" in description.lowercase())
+    }
+
+    @Test
     fun `given the confidence property when reading it then should not use numeric constraints the API rejects`() {
         val confidence = properties.getValue("confidence").jsonObject
 
