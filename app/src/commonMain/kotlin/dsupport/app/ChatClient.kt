@@ -15,7 +15,7 @@ import io.ktor.http.isSuccess
 import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.channelFlow
 
 /** Where the answers come from. The app only knows this port. */
 fun interface Assistant {
@@ -25,7 +25,7 @@ fun interface Assistant {
 /** Talks to the DSupport server: posts the question and reads the events as they stream back. */
 class ChatClient(private val http: HttpClient, private val baseUrl: String) : Assistant {
 
-    override fun ask(question: String): Flow<StreamItem> = flow {
+    override fun ask(question: String): Flow<StreamItem> = channelFlow {
         val parser = SseParser()
         try {
             http.preparePost("$baseUrl/chat") {
@@ -33,19 +33,19 @@ class ChatClient(private val http: HttpClient, private val baseUrl: String) : As
                 setBody(ServerSentEvents.json.encodeToString(ChatRequest.serializer(), ChatRequest(question)))
             }.execute { response ->
                 if (!response.status.isSuccess()) {
-                    emit(StreamItem.Failure(response.bodyAsText().ifBlank { response.status.toString() }))
+                    send(StreamItem.Failure(response.bodyAsText().ifBlank { response.status.toString() }))
                     return@execute
                 }
                 val channel = response.bodyAsChannel()
                 while (true) {
                     val line = channel.readUTF8Line() ?: break
-                    parser.accept(line)?.let { emit(it) }
+                    parser.accept(line)?.let { send(it) }
                 }
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            emit(StreamItem.Failure("could not reach the server at $baseUrl: ${e.message}"))
+            send(StreamItem.Failure("could not reach the server at $baseUrl: ${e.message}"))
         }
     }
 }
