@@ -1,0 +1,219 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DSupport</title><style>
+:root{--bg:#fafafa;--fg:#1c1e21;--muted:#5b6470;--card:#fff;--line:#d9dde3;--accent:#0b5fff;--code:#f1f3f5}
+@media (prefers-color-scheme:dark){:root{--bg:#14161a;--fg:#e8eaed;--muted:#9aa3ad;--card:#1c1f24;--line:#2d333b;--accent:#6ea0ff;--code:#101216}}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
+header{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+button{background:var(--accent);color:#fff;border:0;border-radius:6px;padding:6px 12px;cursor:pointer}
+main{max-width:980px;margin:0 auto;padding:0 16px}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;margin:20px 0}
+h1{font-size:44px;margin:0}h2{margin:4px 0 8px}.lead{font-size:19px;color:var(--muted)}.small{color:var(--muted);font-size:14px}
+.tag{font:12px monospace;color:var(--accent)}.analogy{font-style:italic}.observe{border-left:3px solid var(--accent);padding-left:10px}
+pre{background:var(--code);border-radius:8px;padding:12px;overflow:auto;font:13px/1.45 ui-monospace,monospace;margin:10px 0}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.pt{display:none}body.pt .pt{display:inline}body.pt .en{display:none}
+</style></head><body><header><strong>DSupport</strong><button id="t">PT / EN</button></header><main><section><h1>DSupport</h1><p class="lead"><span class="en">A multi-agent customer support assistant, built by hand in Kotlin Multiplatform</span><span class="pt">Um assistente de suporte multiagente, construído à mão em Kotlin Multiplatform</span></p><p class="small"><span class="en">Agent loop · RAG · MCP · guardrails · evals</span><span class="pt">Laço do agente · RAG · MCP · guardrails · evals</span></p></section>
+<section><h2><span class="en">Architecture</span><span class="pt">Arquitetura</span></h2><pre class="diagram">contract  ←  core  ←  adapters  ←  cli · eval · server · mcp-orders · mcp-tickets
+                                     ↑
+                                   app (Compose Desktop)
+
+dependencies point inward · ports live in the core · adapters implement them</pre><p><span class="en">Swapping the model, the knowledge base or the tool transport is a new adapter, never a change in the core.</span><span class="pt">Trocar o modelo, a base de conhecimento ou o transporte das ferramentas é um novo adapter, nunca uma mudança no core.</span></p></section>
+<section><div class="tag">etapa-1</div><h2><span class="en">Stage 1 — Agent loop</span><span class="pt">Etapa 1 — Laço do agente</span></h2><p class="lead"><span class="en">the loop that makes a model an agent</span><span class="pt">o laço que transforma um modelo em agente</span></p><p class="analogy"><span class="en">Analogy: A manager who only gives orders and an assistant who does the work.</span><span class="pt">Analogia: Um gerente que só dá ordens e um assistente que faz o trabalho.</span></p><pre class="diagram">question → model → tool call? → code runs it → result back → model → answer (bounded by maxTurns)</pre><pre class="code">/** The contract the model reads to decide: name, description and the JSON Schema of the input. */
+data class ToolSpec(
+    val name: String,
+    val description: String,
+    val inputSchema: JsonObject,
+    val readOnly: Boolean = true,
+    val destructive: Boolean = false,
+)
+
+data class ToolResult(val content: String, val isError: Boolean = false)
+
+/** A capability of the agent, local or remote (MCP). The agent cannot tell the difference. */
+interface Tool {
+    val spec: ToolSpec
+    suspend fun run(args: JsonObject): ToolResult
+}
+
+/** Where tools come from: a local list, an MCP server, and so on. */
+interface ToolProvider {
+    suspend fun tools(): List&lt;Tool&gt;</pre><p class="observe"><span class="en">Run it: the model never executes anything, it only asks.</span><span class="pt">Rode: o modelo nunca executa nada, só pede.</span></p></section>
+<section><div class="tag">etapa-2</div><h2><span class="en">Stage 2 — LLM client (Large Language Model)</span><span class="pt">Etapa 2 — Cliente de LLM (Large Language Model)</span></h2><p class="lead"><span class="en">one port, one adapter per provider</span><span class="pt">uma porta, um adapter por provedor</span></p><p class="analogy"><span class="en">Analogy: A socket and a plug: swap the brain, keep the system.</span><span class="pt">Analogia: Uma tomada e um plugue: troque o cérebro, mantenha o sistema.</span></p><pre class="diagram">core: LlmClient (port)  ←  adapters: AnthropicLlmClient (HTTP + JSON mapping)</pre><pre class="code">data class Usage(val inputTokens: Int, val outputTokens: Int)
+
+data class LlmRequest(val system: String, val messages: List&lt;Message&gt;, val tools: List&lt;ToolSpec&gt;)
+
+sealed interface LlmReply {
+    val usage: Usage
+
+    data class Text(val text: String, override val usage: Usage) : LlmReply
+    data class ToolCalls(val calls: List&lt;ToolCall&gt;, override val usage: Usage) : LlmReply
+}
+
+/** A structured answer plus what it cost, so the cost of structured calls is as visible as any other call. */
+data class StructuredReply(val value: JsonObject, val usage: Usage)
+
+/** A mandatory output format: name, description and the JSON Schema the answer must follow. */
+data class OutputSchema(val name: String, val description: String, val schema: JsonObject)
+
+/** The only thing the core knows about a language model. Each provider is an adapter. */
+interface LlmClient {
+    suspend fun next(request: LlmRequest): LlmReply
+    suspend fun structured(request: LlmRequest, schema: OutputSchema): StructuredReply
+}</pre><p class="observe"><span class="en">Observe: the core never imports a provider.</span><span class="pt">Observe: o core nunca importa um provedor.</span></p></section>
+<section><div class="tag">etapa-3</div><h2><span class="en">Stage 3 — Tools (tool use, function calling)</span><span class="pt">Etapa 3 — Ferramentas (tool use, function calling)</span></h2><p class="lead"><span class="en">functions the model can ask the code to run</span><span class="pt">funções que o modelo pode pedir ao código</span></p><p class="analogy"><span class="en">Analogy: Giving the assistant hands: look up an order, open a ticket.</span><span class="pt">Analogia: Dar mãos ao assistente: consultar um pedido, abrir um ticket.</span></p><pre class="diagram">get_order_status · track_shipment · create_ticket (+ search_kb)</pre><pre class="code">class GetOrderStatusTool(
+    private val orders: OrderGateway,
+    private val today: () -&gt; LocalDate = { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date },
+) : Tool {
+
+    override val spec = ToolSpec(
+        name = &quot;get_order_status&quot;,
+        description = &quot;Looks up the status, delivery estimate and delay of an order. Use it when the customer asks &quot; +
+            &quot;whether an order arrived or is late. Requires order_id and the email used in the purchase.&quot;,
+        inputSchema = stringSchema(&quot;order_id&quot;, &quot;email&quot;),
+    )
+
+    override suspend fun run(args: JsonObject): ToolResult {
+        val orderId = args.stringArg(&quot;order_id&quot;) ?: return fail(&quot;missing_argument:order_id&quot;)
+        val email = args.stringArg(&quot;email&quot;) ?: return fail(&quot;missing_argument:email&quot;)
+        val order = orders.findOwned(orderId, email) ?: return fail(&quot;order_not_found_or_email_mismatch&quot;)</pre><p class="observe"><span class="en">Observe: a tool returns an error result instead of throwing.</span><span class="pt">Observe: a ferramenta devolve resultado de erro em vez de lançar exceção.</span></p></section>
+<section><div class="tag">etapa-4</div><h2><span class="en">Stage 4 — RAG (Retrieval-Augmented Generation)</span><span class="pt">Etapa 4 — RAG (Retrieval-Augmented Generation)</span></h2><p class="lead"><span class="en">answering with a consultation</span><span class="pt">responder com consulta</span></p><p class="analogy"><span class="en">Analogy: An exam where you may consult the manual.</span><span class="pt">Analogia: Uma prova em que se pode consultar o manual.</span></p><pre class="diagram">articles → chunks → TF-IDF vectors → search → relevance cut-off → answer cites the source</pre><pre class="code">class SearchKbTool(
+    private val kb: KnowledgeSearch,
+    private val minScore: Double = 0.25,
+) : Tool {
+
+    override val spec = ToolSpec(
+        name = &quot;search_kb&quot;,
+        description = &quot;Searches the help center articles. Use it for questions about policies, deadlines, returns, &quot; +
+            &quot;refunds, shipping, payments, warranty, cancellation, privacy and the customer account.&quot;,
+        inputSchema = stringSchema(&quot;query&quot;),
+    )
+
+    override suspend fun run(args: JsonObject): ToolResult {
+        val query = args.stringArg(&quot;query&quot;) ?: return fail(&quot;missing_argument:query&quot;)
+        val relevant = kb.search(query).filter { it.score &gt;= minScore }
+        if (relevant.isEmpty()) return fail(&quot;nothing_relevant_found&quot;)
+        val results = relevant.map {
+            buildJsonObject {
+                put(&quot;doc_id&quot;, it.docId)
+                put(&quot;title&quot;, it.title)
+                put(&quot;snippet&quot;, it.snippet)
+                put(&quot;score&quot;, it.score)</pre><p class="observe"><span class="en">Observe: below the cut-off the tool says nothing was found.</span><span class="pt">Observe: abaixo do corte a ferramenta diz que não achou nada.</span></p></section>
+<section><div class="tag">etapa-5</div><h2><span class="en">Stage 5 — MCP (Model Context Protocol)</span><span class="pt">Etapa 5 — MCP (Model Context Protocol)</span></h2><p class="lead"><span class="en">tools served by separate programs</span><span class="pt">ferramentas servidas por programas separados</span></p><p class="analogy"><span class="en">Analogy: USB-C: any tool that speaks it plugs into any agent.</span><span class="pt">Analogia: USB-C: qualquer ferramenta que fale o protocolo liga em qualquer agente.</span></p><pre class="diagram">agent ⇄ McpToolProvider ⇄ stdio ⇄ mcp-orders / mcp-tickets (initialize → tools/list → tools/call)</pre><pre class="code">/** A live conversation with one MCP server. Hides the SDK and the child process. */
+interface McpConnection : AutoCloseable {
+    suspend fun listTools(): List&lt;ToolSpec&gt;
+    suspend fun callTool(name: String, args: JsonObject): ToolResult
+}</pre><p class="observe"><span class="en">Observe: add the tickets server by editing config/mcp-servers.json only.</span><span class="pt">Observe: adicione o servidor de tickets só editando config/mcp-servers.json.</span></p></section>
+<section><div class="tag">etapa-6</div><h2><span class="en">Stage 6 — Multi-agent orchestration</span><span class="pt">Etapa 6 — Orquestração multiagente</span></h2><p class="lead"><span class="en">a coordinator and specialists, in parallel</span><span class="pt">um coordenador e especialistas, em paralelo</span></p><p class="analogy"><span class="en">Analogy: A reception desk sending each question to the right expert.</span><span class="pt">Analogia: Uma recepção que manda cada pergunta ao especialista certo.</span></p><pre class="diagram">orchestrator → knowledge | orders | escalation (each is a tool; parallel calls via async/awaitAll)</pre><pre class="code">class SubAgentTool(
+    private val name: String,
+    description: String,
+    private val newAgent: () -&gt; Agent,
+) : Tool {
+
+    override val spec = ToolSpec(name, description, stringSchema(&quot;task&quot;))
+
+    override suspend fun run(args: JsonObject): ToolResult {
+        val task = args.stringArg(&quot;task&quot;) ?: return fail(&quot;missing_argument:task&quot;)
+        return try {
+            ToolResult(newAgent().run(task))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            ToolResult(&quot;error: specialist &#x27;$name&#x27; failed: ${e.message}&quot;, isError = true)
+        }
+    }
+}
+
+fun subAgentTool(name: String, description: String, newAgent: () -&gt; Agent): Tool = SubAgentTool(name, description, newAgent)</pre><p class="observe"><span class="en">Observe: two create_ticket calls in one turn still make one ticket.</span><span class="pt">Observe: duas chamadas create_ticket no mesmo turno ainda geram um ticket.</span></p></section>
+<section><div class="tag">etapa-7</div><h2><span class="en">Stage 7 — Guardrails (guards, hooks)</span><span class="pt">Etapa 7 — Guardrails (guards, hooks)</span></h2><p class="lead"><span class="en">rules the model can neither see nor skip</span><span class="pt">regras que o modelo não vê nem pula</span></p><p class="analogy"><span class="en">Analogy: Safety rails around the model.</span><span class="pt">Analogia: Grades de proteção em volta do modelo.</span></p><pre class="diagram">beforeTool (allow/deny/modify) → tool → afterTool (rewrite) → beforeFinal (rewrite)</pre><pre class="code">interface Hook {
+    val name: String get() = this::class.simpleName.orEmpty()
+
+    val covers: Set&lt;String&gt; get() = emptySet()
+
+    suspend fun beforeTool(agent: String, tool: ToolSpec, args: JsonObject): Decision = Decision.Allow
+
+    suspend fun afterTool(agent: String, tool: ToolSpec, args: JsonObject, result: ToolResult): ToolResult = result
+
+    suspend fun beforeFinal(agent: String, history: List&lt;Message&gt;, text: String): String = text
+}</pre><p class="observe"><span class="en">Observe: a guard blocks an order lookup without a valid email.</span><span class="pt">Observe: um guard bloqueia consulta de pedido sem e-mail válido.</span></p></section>
+<section><div class="tag">etapa-8.1</div><h2><span class="en">Stage 8.1 — Structured output and validation</span><span class="pt">Etapa 8.1 — Saída estruturada e validação</span></h2><p class="lead"><span class="en">the answer as a form</span><span class="pt">a resposta como um formulário</span></p><p class="analogy"><span class="en">Analogy: A form instead of free text.</span><span class="pt">Analogia: Um formulário em vez de texto livre.</span></p><pre class="diagram">json_schema → SupportAnswer (answer, intent, sources, confidence, escalated, ticket_id) → code validator</pre><pre class="code">data class SupportAnswer(
+    val answer: String = &quot;&quot;,
+    val intent: String = &quot;other&quot;,
+    val sources: List&lt;String&gt; = emptyList(),
+    val confidence: Double = 0.0,
+    val escalated: Boolean = false,
+    @SerialName(&quot;ticket_id&quot;) val ticketId: String? = null,
+) {
+    companion object {</pre><p class="observe"><span class="en">Observe: an invented ticket id is rejected by code.</span><span class="pt">Observe: um id de ticket inventado é rejeitado pelo código.</span></p></section>
+<section><div class="tag">etapa-8.2</div><h2><span class="en">Stage 8.2 — Producer–reviewer loop</span><span class="pt">Etapa 8.2 — Laço produtor–revisor</span></h2><p class="lead"><span class="en">a second pair of eyes, with a limit</span><span class="pt">um segundo par de olhos, com limite</span></p><p class="analogy"><span class="en">Analogy: An editor reading before it goes out.</span><span class="pt">Analogia: Um editor lendo antes de publicar.</span></p><pre class="diagram">draft → code checks → reviewer model → (rejected ≤ 2×) → answer | escalation to a human</pre><pre class="code">/** The verdict of the reviewer. A missing field means rejection, never approval. */
+@Serializable
+data class Review(
+    val approved: Boolean = false,
+    val problems: List&lt;String&gt; = emptyList(),
+) {
+    companion object {
+        private val lenient = Json {
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+        }
+
+        fun fromJson(json: JsonObject): Review = lenient.decodeFromJsonElement(serializer(), json)
+    }
+}</pre><p class="observe"><span class="en">Observe: when the limit is hit, code opens the ticket, not the model.</span><span class="pt">Observe: ao bater o limite, o código abre o ticket, não o modelo.</span></p></section>
+<section><div class="tag">etapa-9.1</div><h2><span class="en">Stage 9.1 — Observability</span><span class="pt">Etapa 9.1 — Observabilidade</span></h2><p class="lead"><span class="en">events, tracing and cost per agent</span><span class="pt">eventos, rastro e custo por agente</span></p><p class="analogy"><span class="en">Analogy: A flight recorder.</span><span class="pt">Analogia: Uma caixa-preta de avião.</span></p><pre class="diagram">AgentEvent (runId, parentRunId) → TraceReport.tree / byAgent / slowest → traces/*.json</pre><pre class="code">class RunContext(val runId: String, val parentRunId: String?) : AbstractCoroutineContextElement(Key) {
+    companion object Key : CoroutineContext.Key&lt;RunContext&gt;
+}</pre><p class="observe"><span class="en">Observe: the parent run id travels in the coroutine context.</span><span class="pt">Observe: o id da execução pai viaja no contexto da corrotina.</span></p></section>
+<section><div class="tag">etapa-9.2</div><h2><span class="en">Stage 9.2 — Evals (golden dataset)</span><span class="pt">Etapa 9.2 — Evals (dataset dourado)</span></h2><p class="lead"><span class="en">an exam with an answer key</span><span class="pt">uma prova com gabarito</span></p><p class="analogy"><span class="en">Analogy: An exam with an answer key.</span><span class="pt">Analogia: Uma prova com gabarito.</span></p><pre class="diagram">15 cases × 3 runs → routing, groundedness, facts, sources, leaks, escalation precision/recall</pre><pre class="code">Routing accuracy      100%
+Groundedness          100%
+Expected facts        100%
+Expected sources      100%
+No leaks              100%
+Escalation precision  100%
+Escalation recall     100%
+Review fallback         0%
+Latency            9822 ms</pre><p class="observe"><span class="en">Observe: the first run had 93% facts and 9% review fallback; three fixes got them to 100% and 0%.</span><span class="pt">Observe: a primeira rodada teve 93% de fatos e 9% de fallback; três correções levaram a 100% e 0%.</span></p></section>
+<section><div class="tag">etapa-11</div><h2><span class="en">Stage 11 — API server</span><span class="pt">Etapa 11 — Servidor de API</span></h2><p class="lead"><span class="en">the assistant behind a web address</span><span class="pt">o assistente atrás de um endereço web</span></p><p class="analogy"><span class="en">Analogy: Opening the doors.</span><span class="pt">Analogia: Abrir as portas.</span></p><pre class="diagram">POST /chat → text/event-stream, one AgentEvent per frame (event: error on failure)</pre><pre class="code">fun Application.chatModule(answerCustomer: AnswerCustomer) {
+    routing {
+        get(&quot;/health&quot;) { call.respondText(&quot;ok&quot;) }
+        post(&quot;/chat&quot;) {
+            val question = try {
+                ServerSentEvents.json.decodeFromString(ChatRequest.serializer(), call.receiveText()).question.trim()
+            } catch (e: SerializationException) {
+                return@post call.respondText(&quot;expected {\&quot;question\&quot;: \&quot;...\&quot;}&quot;, status = HttpStatusCode.BadRequest)
+            } catch (e: IllegalArgumentException) {
+                return@post call.respondText(&quot;expected {\&quot;question\&quot;: \&quot;...\&quot;}&quot;, status = HttpStatusCode.BadRequest)
+            }
+            if (question.isEmpty() || question.length &gt; MAX_QUESTION_LENGTH) {
+                return@post call.respondText(
+                    &quot;the question must have between 1 and $MAX_QUESTION_LENGTH characters&quot;,
+                    status = HttpStatusCode.BadRequest,
+                )
+            }
+            call.respondTextWriter(ContentType.Text.EventStream) {
+                answerCustomer(question)
+                    .catch { failure -&gt;
+                        if (failure is CancellationException) throw failure
+                        write(ServerSentEvents.errorFrame(failure.message ?: failure::class.simpleName.orEmpty()))
+                        flush()
+                    }</pre><p class="observe"><span class="en">Observe: the API key lives only on the server.</span><span class="pt">Observe: a chave da API vive só no servidor.</span></p></section>
+<section><div class="tag">etapa-12</div><h2><span class="en">Stage 12 — Client app</span><span class="pt">Etapa 12 — App cliente</span></h2><p class="lead"><span class="en">the chat with sources, badge and live trace</span><span class="pt">o chat com fontes, selo e rastro ao vivo</span></p><p class="analogy"><span class="en">Analogy: The face of the assistant.</span><span class="pt">Analogia: O rosto do assistente.</span></p><pre class="diagram">ChatClient (adapter) → ChatViewModel (state) → ChatScreen (Compose)</pre><pre class="code">sealed interface ChatMessage {
+    data class Customer(val text: String) : ChatMessage
+    data class Reply(val answer: SupportAnswer, val events: List&lt;AgentEvent&gt;) : ChatMessage
+    data class Problem(val text: String) : ChatMessage
+}
+
+data class ChatState(
+    val messages: List&lt;ChatMessage&gt; = emptyList(),
+    val running: Boolean = false,
+    val liveEvents: List&lt;AgentEvent&gt; = emptyList(),
+)
+
+/** Holds what the screen shows. One question runs at a time. */
+class ChatViewModel(private val assistant: Assistant, private val scope: CoroutineScope) {
+    private val mutableState = MutableStateFlow(ChatState())
+    val state: StateFlow&lt;ChatState&gt; = mutableState.asStateFlow()
+
+    fun send(question: String) {</pre><p class="observe"><span class="en">Run it: ./gradlew :server:run and ./gradlew :app:run.</span><span class="pt">Rode: ./gradlew :server:run e ./gradlew :app:run.</span></p></section>
+<section><h2><span class="en">Numbers</span><span class="pt">Números</span></h2><table><tr><th><span class="en">Metric</span><span class="pt">Métrica</span></th><th>Baseline</th><th><span class="en">After fixes</span><span class="pt">Depois das correções</span></th></tr><tr><td>Routing</td><td>100%</td><td>100%</td></tr><tr><td>Facts</td><td>93%</td><td>100%</td></tr><tr><td>Sources</td><td>86%</td><td>100%</td></tr><tr><td>Escalation precision</td><td>80%</td><td>100%</td></tr><tr><td>Review fallback</td><td>9%</td><td>0%</td></tr><tr><td>Latency</td><td>11.0 s</td><td>9.8 s</td></tr><tr><td>Tokens / case</td><td>9,510</td><td>9,053</td></tr></table><p class="small"><span class="en">claude-haiku-5-5, 15 cases × 3 runs. First real run: ~15k input / 2k output tokens, about 0.25 cent.</span><span class="pt">claude-haiku-5-5, 15 casos × 3 execuções. Primeira execução real: ~15k tokens de entrada / 2k de saída, cerca de 0,25 centavo.</span></p></section>
+<section><h2><span class="en">What to take away</span><span class="pt">O que levar</span></h2><ul><li><span class="en">The model decides, your code acts and checks.</span><span class="pt">O modelo decide, seu código age e confere.</span></li><li><span class="en">Guardrails and validation live in code, not in the prompt.</span><span class="pt">Guardrails e validação vivem no código, não no prompt.</span></li><li><span class="en">Measure with evals before and after every change.</span><span class="pt">Meça com evals antes e depois de cada mudança.</span></li><li><span class="en">Ports and adapters keep the system swappable.</span><span class="pt">Portas e adapters mantêm o sistema trocável.</span></li></ul></section></main><script>
+var b=document.body;try{if(localStorage.getItem('lang')==='pt')b.classList.add('pt')}catch(e){}
+document.getElementById('t').onclick=function(){b.classList.toggle('pt');try{localStorage.setItem('lang',b.classList.contains('pt')?'pt':'en')}catch(e){}}
+</script></body></html>
