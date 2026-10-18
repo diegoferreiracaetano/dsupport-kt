@@ -98,6 +98,8 @@ MCP servers (stage 5) are used by setting `MCP_SERVERS_FILE=config/mcp-servers.j
 
 The golden set is small (15 cases): it proves the method, not production readiness.
 
+The teaching deck is [docs/presentation/index.html](docs/presentation/index.html) (open it in a browser, EN/PT toggle) and the article draft is [docs/article/article.md](docs/article/article.md).
+
 ## Run it
 
 Requirements: JDK 21 (the Gradle JVM is pinned in `gradle/gradle-daemon-jvm.properties`, so the system `java` can differ).

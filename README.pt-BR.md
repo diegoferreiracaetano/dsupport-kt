@@ -98,6 +98,8 @@ Os servidores MCP (etapa 5) são usados definindo `MCP_SERVERS_FILE=config/mcp-s
 
 O conjunto de referência é pequeno (15 casos): prova o método, não que está pronto para produção.
 
+A apresentação didática é [docs/presentation/index.html](docs/presentation/index.html) (abra no navegador, alterna EN/PT) e o rascunho do artigo é [docs/article/article.pt-BR.md](docs/article/article.pt-BR.md).
+
 ## Como rodar
 
 Requisitos: JDK 21 (a JVM do Gradle é fixada em `gradle/gradle-daemon-jvm.properties`, então o `java` do sistema pode ser outro).

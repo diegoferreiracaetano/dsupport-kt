@@ -127,16 +127,16 @@ Projeto novo e separado do estudo `DsupportKotlin`. Kotlin Multiplatform, Clean 
 ## Entrega final
 
 ### E13 — Apresentação didática
-- [ ] Formato definido (deck ou página)
-- [ ] Títulos das etapas com o nome real do conceito e a sigla por extenso, seguido de um subtítulo em linguagem simples (ver `docs/presentation/glossary.pt-BR.md`)
-- [ ] Um bloco por etapa: conceito, analogia, diagrama, código real da tag, demo, o que observar
-- [ ] Arquitetura completa e números da avaliação
+- [x] Formato definido (deck ou página)
+- [x] Títulos das etapas com o nome real do conceito e a sigla por extenso, seguido de um subtítulo em linguagem simples (ver `docs/presentation/glossary.pt-BR.md`)
+- [x] Um bloco por etapa: conceito, analogia, diagrama, código real da tag, demo, o que observar
+- [x] Arquitetura completa e números da avaliação
 - [ ] GIF ou vídeo da demo
 
 ### E14 — Artigo para publicar (último item)
 - [ ] Plataforma e público escolhidos
-- [ ] Roteiro: problema, arquitetura, o que foi construído etapa a etapa, números da avaliação, lições aprendidas
-- [ ] Rascunho com trechos reais de código tirados das tags
+- [x] Roteiro: problema, arquitetura, o que foi construído etapa a etapa, números da avaliação, lições aprendidas
+- [x] Rascunho com trechos reais de código tirados das tags
 - [ ] Imagens: diagrama da arquitetura, GIF da demo, tabela de métricas
 - [ ] Revisão sua e ajustes
 - [ ] Publicação (só com a sua confirmação) e link no README

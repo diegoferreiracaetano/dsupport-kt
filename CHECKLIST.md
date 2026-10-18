@@ -127,16 +127,16 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 ## Final delivery
 
 ### E13 — Teaching presentation
-- [ ] Format defined (deck or page)
-- [ ] Stage titles use the real concept name with the acronym spelled out, then a plain-language subtitle (see `docs/presentation/glossary.md`)
-- [ ] One block per stage: concept, analogy, diagram, real code from the tag, demo, what to observe
-- [ ] Complete architecture and evaluation numbers
+- [x] Format defined (deck or page)
+- [x] Stage titles use the real concept name with the acronym spelled out, then a plain-language subtitle (see `docs/presentation/glossary.md`)
+- [x] One block per stage: concept, analogy, diagram, real code from the tag, demo, what to observe
+- [x] Complete architecture and evaluation numbers
 - [ ] GIF or video of the demo
 
 ### E14 — Article to publish (last item)
 - [ ] Platform and audience chosen
-- [ ] Outline: problem, architecture, what was built stage by stage, evaluation numbers, lessons learned
-- [ ] Draft with real code excerpts taken from the tags
+- [x] Outline: problem, architecture, what was built stage by stage, evaluation numbers, lessons learned
+- [x] Draft with real code excerpts taken from the tags
 - [ ] Images: architecture diagram, demo GIF, metrics table
 - [ ] Review by Diego and adjustments
 - [ ] Publishing (only with Diego's confirmation) and a link in the README
