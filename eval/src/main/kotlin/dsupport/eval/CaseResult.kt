@@ -19,4 +19,5 @@ data class CaseResult(
     val question: String = "",
     val intent: String = "",
     val answer: String = "",
+    val reviewTrail: List<String> = emptyList(),
 )

@@ -152,6 +152,21 @@ class CaseScorerTest {
     }
 
     @Test
+    fun `given review rounds in the events when scoring then should keep the trail with the problems of each round`() {
+        val events = listOf(
+            AgentEvent.ReviewRound(1, false, listOf("confidence 0.3 without escalating", "ticket missing")),
+            AgentEvent.ReviewRound(2, true, emptyList()),
+        )
+
+        val result = score(case(), answer(), events)
+
+        assertEquals(
+            listOf("round 1: rejected (confidence 0.3 without escalating; ticket missing)", "round 2: approved"),
+            result.reviewTrail,
+        )
+    }
+
+    @Test
     fun `given a perfect answer when scoring then should have no misses`() {
         assertEquals(emptyList(), score(case(), answer()).misses)
     }

@@ -32,6 +32,7 @@ class CaseScorer(private val validator: SupportAnswerValidator = SupportAnswerVa
             question = case.question,
             intent = answer.intent,
             answer = excerpt(answer.answer),
+            reviewTrail = reviewTrailOf(events),
         )
     }
 
@@ -45,6 +46,12 @@ class CaseScorer(private val validator: SupportAnswerValidator = SupportAnswerVa
             .forEach { add("missing source: '$it'") }
         case.mustNotContain.filter { answer.answer.contains(it, ignoreCase = true) }.forEach { add("forbidden content found: '$it'") }
     }
+
+    private fun reviewTrailOf(events: List<AgentEvent>): List<String> =
+        events.filterIsInstance<AgentEvent.ReviewRound>().map { round ->
+            if (round.approved) "round ${round.round}: approved"
+            else "round ${round.round}: rejected (${round.problems.joinToString("; ")})"
+        }
 
     private fun excerpt(text: String): String = if (text.length <= EXCERPT_LIMIT) text else text.take(EXCERPT_LIMIT) + "..."
 

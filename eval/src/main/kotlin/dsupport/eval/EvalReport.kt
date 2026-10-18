@@ -70,6 +70,7 @@ class EvalReport(private val results: List<CaseResult>) {
             appendLine("- Intent: ${result.intent}")
             appendLine("- Answer: ${result.answer}")
             appendLine("- Misses: ${result.misses.joinToString("; ")}")
+            if (result.reviewTrail.isNotEmpty()) appendLine("- Review: ${result.reviewTrail.joinToString("; ")}")
             if (result.problems.isNotEmpty()) appendLine("- Problems: ${result.problems.joinToString("; ")}")
             result.error?.let { appendLine("- Error: $it") }
         }

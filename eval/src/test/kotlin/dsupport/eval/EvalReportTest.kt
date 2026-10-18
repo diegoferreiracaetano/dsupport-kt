@@ -97,7 +97,10 @@ class EvalReportTest {
         val failing = result(
             "g12", escalated = true, shouldEscalate = false, factsOk = false,
             misses = listOf("missing fact: 'email'", "escalated=true but expected false"),
-        ).copy(question = "Where is my order 1042?", intent = "order", answer = "I opened a ticket for you.")
+        ).copy(
+            question = "Where is my order 1042?", intent = "order", answer = "I opened a ticket for you.",
+            reviewTrail = listOf("round 1: rejected (confidence 0.3 without escalating)", "round 2: approved"),
+        )
 
         val markdown = EvalReport(listOf(failing, result("g01"))).toMarkdown("Report")
 
@@ -106,6 +109,7 @@ class EvalReportTest {
         assertTrue("- Question: Where is my order 1042?" in markdown)
         assertTrue("- Answer: I opened a ticket for you." in markdown)
         assertTrue("- Misses: missing fact: 'email'; escalated=true but expected false" in markdown)
+        assertTrue("- Review: round 1: rejected (confidence 0.3 without escalating); round 2: approved" in markdown)
         assertFalse("### g01" in markdown)
     }
 
