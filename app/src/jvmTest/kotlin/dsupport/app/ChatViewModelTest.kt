@@ -145,4 +145,30 @@ class ChatViewModelTest {
         assertEquals(Language.ENGLISH, viewModel.state.value.language)
         assertEquals(2, viewModel.state.value.messages.size)
     }
+
+    @Test
+    fun `given a finished conversation when starting a new chat then should clear the messages and keep the language`() = runTest {
+        val viewModel = ChatViewModel(assistantStreaming(StreamItem.Event(completed)), this)
+        viewModel.changeLanguage(Language.ENGLISH)
+        viewModel.send("hi")
+        advanceUntilIdle()
+
+        viewModel.reset()
+
+        assertEquals(emptyList(), viewModel.state.value.messages)
+        assertEquals(Language.ENGLISH, viewModel.state.value.language)
+    }
+
+    @Test
+    fun `given a question still running when starting a new chat then should keep the conversation`() = runTest {
+        val gate = MutableSharedFlow<StreamItem>()
+        val assistant = mockk<Assistant>().also { every { it.ask(any()) } returns gate }
+        val viewModel = ChatViewModel(assistant, backgroundScope)
+        viewModel.send("hi")
+        runCurrent()
+
+        viewModel.reset()
+
+        assertEquals(1, viewModel.state.value.messages.size)
+    }
 }

@@ -52,6 +52,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isShiftPressed
@@ -78,6 +81,7 @@ fun ChatScreen(
     dark: Boolean = isSystemInDarkTheme(),
     serverAddress: String = "",
     onServerAddress: (String) -> Unit = {},
+    onNewChat: () -> Unit = {},
 ) {
     val strings = Strings.of(state.language)
     DSupportTheme(dark) {
@@ -88,12 +92,12 @@ fun ChatScreen(
                 val toggle = { traceVisible = !traceVisible }
                 if (compact) {
                     Box(Modifier.fillMaxSize()) {
-                        Conversation(state, strings, traceVisible, onSend, onLanguage, toggle, serverAddress, onServerAddress, Modifier.fillMaxSize())
+                        Conversation(state, strings, traceVisible, onSend, onLanguage, toggle, serverAddress, onServerAddress, onNewChat, Modifier.fillMaxSize())
                         if (traceVisible) TracePanel(state, strings, Modifier.fillMaxSize(), onClose = toggle)
                     }
                 } else {
                     Row(Modifier.fillMaxSize()) {
-                        Conversation(state, strings, traceVisible, onSend, onLanguage, toggle, serverAddress, onServerAddress, Modifier.weight(1f).fillMaxHeight())
+                        Conversation(state, strings, traceVisible, onSend, onLanguage, toggle, serverAddress, onServerAddress, onNewChat, Modifier.weight(1f).fillMaxHeight())
                         if (traceVisible) {
                             Box(Modifier.width(1.dp).fillMaxHeight().background(palette.border))
                             TracePanel(state, strings, Modifier.width(TraceWidth).fillMaxHeight())
@@ -115,11 +119,16 @@ private fun Conversation(
     onToggleTrace: () -> Unit,
     serverAddress: String,
     onServerAddress: (String) -> Unit,
+    onNewChat: () -> Unit,
     modifier: Modifier,
 ) {
+    val focus = LocalFocusManager.current
     Column(modifier) {
-        Header(state.language, strings, traceVisible, onLanguage, onToggleTrace, serverAddress, onServerAddress)
-        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+        Header(state.language, strings, traceVisible, onLanguage, onToggleTrace, serverAddress, onServerAddress, state.messages.isNotEmpty() && !state.running, onNewChat)
+        Box(
+            Modifier.weight(1f).fillMaxWidth().pointerInput(Unit) { detectTapGestures(onTap = { focus.clearFocus() }) },
+            contentAlignment = Alignment.TopCenter,
+        ) {
             if (state.messages.isEmpty() && !state.running) {
                 EmptyState(strings, onSend, Modifier.widthIn(max = ContentWidth).padding(horizontal = 24.dp))
             } else {
@@ -139,6 +148,8 @@ private fun Header(
     onToggleTrace: () -> Unit,
     serverAddress: String,
     onServerAddress: (String) -> Unit,
+    canStartOver: Boolean,
+    onNewChat: () -> Unit,
 ) {
     var editing by remember { mutableStateOf(false) }
     if (editing) ServerDialog(serverAddress, strings, { editing = false }, onServerAddress)
@@ -149,6 +160,14 @@ private fun Header(
     ) {
         Text(strings.title, style = MaterialTheme.typography.titleMedium, color = palette.text)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (canStartOver) {
+                Text(
+                    strings.newChat,
+                    Modifier.clip(Radius).clickable(onClick = onNewChat).padding(horizontal = 8.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = palette.accent,
+                )
+            }
             if (serverAddress.isNotEmpty()) {
                 Text(
                     strings.server,
@@ -212,6 +231,10 @@ private fun Modifier.outline(color: androidx.compose.ui.graphics.Color): Modifie
 @Composable
 private fun MessageList(state: ChatState, strings: Strings, modifier: Modifier) {
     val listState = rememberLazyListState()
+    val focus = LocalFocusManager.current
+    LaunchedEffect(listState.isScrollInProgress) {
+        if (listState.isScrollInProgress) focus.clearFocus()
+    }
     val lastIndex = state.messages.size + if (state.running) 1 else 0
     LaunchedEffect(lastIndex) {
         if (lastIndex > 0) listState.animateScrollToItem(lastIndex - 1)
@@ -309,10 +332,12 @@ private fun Thinking(strings: Strings) {
 @Composable
 private fun Composer(running: Boolean, strings: Strings, onSend: (String) -> Unit, modifier: Modifier) {
     var draft by remember { mutableStateOf("") }
+    val focus = LocalFocusManager.current
     val send = {
         if (draft.isNotBlank() && !running) {
             onSend(draft)
             draft = ""
+            focus.clearFocus()
         }
     }
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {

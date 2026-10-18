@@ -28,5 +28,5 @@ fun App(serverUrl: String) {
         ChatViewModel({ question: String -> ChatClient(http, address).ask(question) }, scope)
     }
     val state by viewModel.state.collectAsState()
-    ChatScreen(state, viewModel::send, viewModel::changeLanguage, serverAddress = address, onServerAddress = { address = it.trim().trimEnd('/') })
+    ChatScreen(state, viewModel::send, viewModel::changeLanguage, serverAddress = address, onServerAddress = { address = it.trim().trimEnd('/') }, onNewChat = viewModel::reset)
 }

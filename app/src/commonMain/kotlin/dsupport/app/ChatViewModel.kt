@@ -29,6 +29,11 @@ class ChatViewModel(private val assistant: Assistant, private val scope: Corouti
     private val mutableState = MutableStateFlow(ChatState())
     val state: StateFlow<ChatState> = mutableState.asStateFlow()
 
+    fun reset() {
+        if (mutableState.value.running) return
+        mutableState.update { it.copy(messages = emptyList(), liveEvents = emptyList()) }
+    }
+
     fun changeLanguage(language: Language) {
         mutableState.update { it.copy(language = language) }
     }

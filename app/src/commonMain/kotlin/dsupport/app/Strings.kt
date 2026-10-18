@@ -34,6 +34,7 @@ data class Strings(
     val serverHint: String,
     val save: String,
     val cancel: String,
+    val newChat: String,
     private val intents: Map<String, String>,
 ) {
     fun intent(name: String): String = intents[name] ?: name
@@ -67,6 +68,7 @@ data class Strings(
             serverHint = "Endereço do servidor, por exemplo http://192.168.0.10:8080",
             save = "Salvar",
             cancel = "Cancelar",
+            newChat = "Nova conversa",
             intents = mapOf("policy" to "política", "order" to "pedido", "return" to "devolução", "complaint" to "reclamação", "other" to "outro"),
         )
 
@@ -98,6 +100,7 @@ data class Strings(
             serverHint = "Server address, for example http://192.168.0.10:8080",
             save = "Save",
             cancel = "Cancel",
+            newChat = "New chat",
             intents = emptyMap(),
         )
 
