@@ -1,11 +1,14 @@
 package dsupport.cli
 
 import dsupport.contract.AgentEvent
+import dsupport.adapters.trace.TraceFiles
 import dsupport.contract.SupportAnswer
+import dsupport.core.trace.TraceReport
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
 import kotlinx.serialization.json.Json
+import java.nio.file.Path
 import kotlin.system.exitProcess
 
 private const val REQUEST_TIMEOUT_MS = 120_000L
@@ -38,8 +41,10 @@ suspend fun main(args: Array<String>) {
             println(formatter.format(it))
         }
 
-        val calls = events.filterIsInstance<AgentEvent.ModelCalled>()
-        println("\nTotal: ${calls.size} model calls, ${calls.sumOf { it.inputTokens }} in / ${calls.sumOf { it.outputTokens }} out tokens")
+        val report = TraceReport()
+        println("\nTrace:\n${report.tree(events)}")
+        println("\n${formatter.formatCost(report.byAgent(events))}")
+        println("\nTrace saved to ${TraceFiles().save(Path.of("traces"), question, events)}")
         val answer = events.filterIsInstance<AgentEvent.Completed>().last().answer
         println(prettyJson.encodeToString(SupportAnswer.serializer(), answer))
     } finally {

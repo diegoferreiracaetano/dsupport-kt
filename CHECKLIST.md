@@ -92,9 +92,9 @@ A new project, separate from the `DsupportKotlin` study. Kotlin Multiplatform, C
 
 ### E9.1 — Events, trace and cost [D] · tag `etapa-9.1`
 - [x] Guide `docs/stages/9-1-trace.md`
-- [ ] `runId` and `parentRunId` on events, parent propagated through the coroutine context
-- [ ] `TraceReport` (tree, cost per agent, slowest) and a JSON trace file (`TraceFiles`)
-- [ ] No global state
+- [x] `runId` and `parentRunId` on events, parent propagated through the coroutine context
+- [x] `TraceReport` (tree, cost per agent, slowest) and a JSON trace file (`TraceFiles`)
+- [x] No global state
 
 ### E9.2 — Evals [M + D] · tag `etapa-9.2`
 - [x] Golden dataset of 15 cases, brand-free (with a leak check, `must_not_contain`)

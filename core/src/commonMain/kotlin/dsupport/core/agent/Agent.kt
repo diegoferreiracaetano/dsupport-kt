@@ -2,6 +2,7 @@ package dsupport.core.agent
 
 import dsupport.contract.AgentEvent
 import dsupport.contract.GuardAction
+import dsupport.contract.ROOT_RUN
 import dsupport.core.guard.Decision
 import dsupport.core.guard.Hook
 import dsupport.core.llm.LlmClient
@@ -15,7 +16,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
+import kotlin.coroutines.coroutineContext
 import kotlin.time.TimeSource
 
 /**
@@ -31,10 +34,13 @@ class Agent(
     private val events: EventSink = EventSink.None,
     private val maxTurns: Int = 5,
     private val depth: Int = 0,
+    private val runIds: RunIds = SequentialRunIds(),
 ) {
     private val toolsByName = tools.associateBy { it.spec.name }
     private val specs = tools.map { it.spec }
     private var history = mutableListOf<Message>()
+    private var runId = ROOT_RUN
+    private var parentRunId: String? = null
 
     /** What the tools returned in this conversation, used to check the final answer. */
     val evidence: List<String>
@@ -42,14 +48,20 @@ class Agent(
 
     suspend fun run(task: String): String {
         history = mutableListOf(Message.User(task))
-        events.emit(AgentEvent.AgentStarted(name, depth, task))
-        return loop()
+        parentRunId = coroutineContext[RunContext]?.runId
+        runId = runIds.next()
+        return inRun {
+            events.emit(AgentEvent.AgentStarted(name, depth, task, runId, parentRunId))
+            loop()
+        }
     }
 
     suspend fun followUp(message: String): String {
         history += Message.User(message)
-        return loop()
+        return inRun { loop() }
     }
+
+    private suspend fun <T> inRun(block: suspend () -> T): T = withContext(RunContext(runId, parentRunId)) { block() }
 
     suspend fun finish(schema: OutputSchema): JsonObject {
         val closing = Message.User("Now return your final answer in the ${schema.name} format.")
@@ -57,7 +69,7 @@ class Agent(
         val reply = llm.structured(LlmRequest(system, history + closing, specs), schema)
         events.emit(
             AgentEvent.ModelCalled(
-                name, reply.usage.inputTokens, reply.usage.outputTokens, mark.elapsedNow().inWholeMilliseconds,
+                name, reply.usage.inputTokens, reply.usage.outputTokens, mark.elapsedNow().inWholeMilliseconds, runId,
             ),
         )
         return reply.value
@@ -69,7 +81,7 @@ class Agent(
             val reply = llm.next(LlmRequest(system, history.toList(), specs))
             events.emit(
                 AgentEvent.ModelCalled(
-                    name, reply.usage.inputTokens, reply.usage.outputTokens, mark.elapsedNow().inWholeMilliseconds,
+                    name, reply.usage.inputTokens, reply.usage.outputTokens, mark.elapsedNow().inWholeMilliseconds, runId,
                 ),
             )
             when (reply) {
@@ -95,13 +107,13 @@ class Agent(
     private suspend fun finalAnswer(proposed: String): String = hooks.fold(proposed) { current, hook ->
         val next = hook.beforeFinal(name, history.toList(), current)
         if (next != current) {
-            events.emit(AgentEvent.GuardActed(name, hook.name, null, GuardAction.REWRITE, "final answer rewritten"))
+            events.emit(AgentEvent.GuardActed(name, hook.name, null, GuardAction.REWRITE, "final answer rewritten", runId))
         }
         next
     }
 
     private suspend fun execute(toolName: String, args: JsonObject): ToolResult {
-        events.emit(AgentEvent.ToolStarted(name, toolName, args.toString()))
+        events.emit(AgentEvent.ToolStarted(name, toolName, args.toString(), runId))
         val mark = TimeSource.Monotonic.markNow()
         val tool = toolsByName[toolName]
         val result = if (tool == null) {
@@ -116,7 +128,7 @@ class Agent(
             }
         }
         events.emit(
-            AgentEvent.ToolFinished(name, toolName, result.content, result.isError, mark.elapsedNow().inWholeMilliseconds),
+            AgentEvent.ToolFinished(name, toolName, result.content, result.isError, mark.elapsedNow().inWholeMilliseconds, runId),
         )
         return result
     }
@@ -127,11 +139,11 @@ class Agent(
             when (val decision = hook.beforeTool(name, tool.spec, args)) {
                 Decision.Allow -> Unit
                 is Decision.Deny -> {
-                    events.emit(AgentEvent.GuardActed(name, hook.name, tool.spec.name, GuardAction.DENY, decision.reason))
+                    events.emit(AgentEvent.GuardActed(name, hook.name, tool.spec.name, GuardAction.DENY, decision.reason, runId))
                     return ToolResult("blocked by ${hook.name}: ${decision.reason}", isError = true)
                 }
                 is Decision.Modify -> {
-                    events.emit(AgentEvent.GuardActed(name, hook.name, tool.spec.name, GuardAction.MODIFY, "arguments changed"))
+                    events.emit(AgentEvent.GuardActed(name, hook.name, tool.spec.name, GuardAction.MODIFY, "arguments changed", runId))
                     args = decision.args
                 }
             }
@@ -146,7 +158,7 @@ class Agent(
         return hooks.fold(raw) { current, hook ->
             val next = hook.afterTool(name, tool.spec, args, current)
             if (next != current) {
-                events.emit(AgentEvent.GuardActed(name, hook.name, tool.spec.name, GuardAction.REWRITE, "result rewritten"))
+                events.emit(AgentEvent.GuardActed(name, hook.name, tool.spec.name, GuardAction.REWRITE, "result rewritten", runId))
             }
             next
         }

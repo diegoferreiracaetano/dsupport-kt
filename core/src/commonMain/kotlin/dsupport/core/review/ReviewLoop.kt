@@ -75,7 +75,7 @@ class ReviewLoop(
         val reply = reviewer.structured(LlmRequest(reviewerPrompt, listOf(Message.User(input)), emptyList()), ReviewSchema.output)
         events.emit(
             AgentEvent.ModelCalled(
-                REVIEWER_NAME, reply.usage.inputTokens, reply.usage.outputTokens, mark.elapsedNow().inWholeMilliseconds,
+                REVIEWER_NAME, reply.usage.inputTokens, reply.usage.outputTokens, mark.elapsedNow().inWholeMilliseconds, REVIEWER_NAME,
             ),
         )
         val verdict = Review.fromJson(reply.value)

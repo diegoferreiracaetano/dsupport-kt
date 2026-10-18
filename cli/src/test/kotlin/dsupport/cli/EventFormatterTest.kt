@@ -3,6 +3,7 @@ package dsupport.cli
 import dsupport.contract.AgentEvent
 import dsupport.contract.GuardAction
 import dsupport.contract.SupportAnswer
+import dsupport.core.trace.AgentCost
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -86,5 +87,20 @@ class EventFormatterTest {
     @Test
     fun `given the completed event when formatting then should say the answer is ready`() {
         assertEquals("completed", formatter.format(AgentEvent.Completed(SupportAnswer(answer = "Hi"))))
+    }
+
+    @Test
+    fun `given costs of two agents when formatting then should print a table with a total`() {
+        val costs = listOf(AgentCost("orchestrator", 2, 100, 20, 300), AgentCost("orders", 1, 50, 5, 120))
+
+        val table = EventFormatter().formatCost(costs)
+
+        assertEquals(
+            "agent         calls  in tokens  out tokens  model ms\n" +
+                "orchestrator      2        100          20       300\n" +
+                "orders            1         50           5       120\n" +
+                "total             3        150          25       420",
+            table,
+        )
     }
 }

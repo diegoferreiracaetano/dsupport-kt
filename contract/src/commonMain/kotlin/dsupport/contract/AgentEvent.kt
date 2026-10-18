@@ -3,6 +3,9 @@ package dsupport.contract
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/** The run id of events that carry no run, for example events read from a trace saved before run ids existed. */
+const val ROOT_RUN = ""
+
 /** What a guard did: blocked the call, changed its arguments, or rewrote a result or answer. */
 @Serializable
 enum class GuardAction { DENY, MODIFY, REWRITE }
@@ -15,13 +18,25 @@ enum class GuardAction { DENY, MODIFY, REWRITE }
 sealed interface AgentEvent {
 
     @Serializable @SerialName("agent_started")
-    data class AgentStarted(val agent: String, val depth: Int, val task: String) : AgentEvent
+    data class AgentStarted(
+        val agent: String,
+        val depth: Int,
+        val task: String,
+        val runId: String = ROOT_RUN,
+        val parentRunId: String? = null,
+    ) : AgentEvent
 
     @Serializable @SerialName("model_called")
-    data class ModelCalled(val agent: String, val inputTokens: Int, val outputTokens: Int, val durationMs: Long) : AgentEvent
+    data class ModelCalled(
+        val agent: String,
+        val inputTokens: Int,
+        val outputTokens: Int,
+        val durationMs: Long,
+        val runId: String = ROOT_RUN,
+    ) : AgentEvent
 
     @Serializable @SerialName("tool_started")
-    data class ToolStarted(val agent: String, val tool: String, val args: String) : AgentEvent
+    data class ToolStarted(val agent: String, val tool: String, val args: String, val runId: String = ROOT_RUN) : AgentEvent
 
     @Serializable @SerialName("tool_finished")
     data class ToolFinished(
@@ -30,6 +45,7 @@ sealed interface AgentEvent {
         val result: String,
         val isError: Boolean,
         val durationMs: Long,
+        val runId: String = ROOT_RUN,
     ) : AgentEvent
 
     @Serializable @SerialName("guard_acted")
@@ -39,6 +55,7 @@ sealed interface AgentEvent {
         val tool: String?,
         val action: GuardAction,
         val detail: String,
+        val runId: String = ROOT_RUN,
     ) : AgentEvent
 
     @Serializable @SerialName("review_round")

@@ -5,6 +5,7 @@ import dsupport.core.agent.AgentDef
 import dsupport.core.agent.AgentsConfig
 import dsupport.core.agent.ESCALATION_PROMPT
 import dsupport.core.agent.EventSink
+import dsupport.core.agent.SequentialRunIds
 import dsupport.core.agent.KNOWLEDGE_PROMPT
 import dsupport.core.agent.ORCHESTRATOR_PROMPT
 import dsupport.core.agent.ORDERS_PROMPT
@@ -78,6 +79,7 @@ class DSupportAssembly(
 
     private fun loopFor(sink: EventSink, toolsOf: Map<String, List<Tool>>): ReviewLoop {
         val guards = newGuards()
+        val runIds = SequentialRunIds()
         val specialists = SPECIALISTS.map { specialist ->
             SubAgentTool(specialist.name, specialist.description) {
                 Agent(
@@ -89,6 +91,7 @@ class DSupportAssembly(
                     events = sink,
                     maxTurns = definitionOf(specialist.name).maxTurns,
                     depth = 1,
+                    runIds = runIds,
                 )
             }
         }
@@ -100,6 +103,7 @@ class DSupportAssembly(
             hooks = guards,
             events = sink,
             maxTurns = ORCHESTRATOR_MAX_TURNS,
+            runIds = runIds,
         )
         return ReviewLoop(orchestrator, llm, REVIEWER_PROMPT, tickets, sink, maxRevisions)
     }

@@ -204,6 +204,7 @@ class ReviewLoopTest {
         val call = events.filterIsInstance<AgentEvent.ModelCalled>().single { it.agent == "reviewer" }
         assertEquals(20, call.inputTokens)
         assertEquals(10, call.outputTokens)
+        assertEquals("reviewer", call.runId)
     }
 
     @Test

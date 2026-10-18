@@ -187,7 +187,7 @@ class AgentTest {
         val result = requests[1].messages.filterIsInstance<Message.ToolResult>().single()
         assertTrue(result.isError)
         assertTrue("Blocker" in result.content && "not allowed" in result.content)
-        assertTrue(events.contains(AgentEvent.GuardActed("support", "Blocker", "echo", GuardAction.DENY, "not allowed")))
+        assertTrue(events.contains(AgentEvent.GuardActed("support", "Blocker", "echo", GuardAction.DENY, "not allowed", runId = "r1")))
     }
 
     @Test
@@ -228,7 +228,7 @@ class AgentTest {
         val answer = agent(hooks = listOf(closer)).run("hello")
 
         assertEquals("done, ticket TCK-1001", answer)
-        assertTrue(events.contains(AgentEvent.GuardActed("support", "Closer", null, GuardAction.REWRITE, "final answer rewritten")))
+        assertTrue(events.contains(AgentEvent.GuardActed("support", "Closer", null, GuardAction.REWRITE, "final answer rewritten", runId = "r1")))
     }
 
     @Test
@@ -320,5 +320,96 @@ class AgentTest {
 
         coVerify(exactly = 3) { counter.beforeTool(any(), any(), any()) }
         coVerify(exactly = 3) { counter.afterTool(any(), any(), any(), any()) }
+    }
+
+    private fun runIdOf(event: AgentEvent): String? = when (event) {
+        is AgentEvent.AgentStarted -> event.runId
+        is AgentEvent.ModelCalled -> event.runId
+        is AgentEvent.ToolStarted -> event.runId
+        is AgentEvent.ToolFinished -> event.runId
+        is AgentEvent.GuardActed -> event.runId
+        else -> null
+    }
+
+    private fun specialistTool(name: String, runIds: RunIds): SubAgentTool {
+        val childLlm = mockk<LlmClient>().also { coEvery { it.next(any()) } returns LlmReply.Text("child done", usage) }
+        return SubAgentTool(name, "Specialist.") { Agent(name, childLlm, "child", emptyList(), emptyList(), sink, 5, 1, runIds) }
+    }
+
+    private fun delegation(id: String, tool: String) = ToolCall(id, tool, buildJsonObject { put("task", "do it") })
+
+    @Test
+    fun `given an agent run when it emits events then should tag all of them with the same run id`() = runTest {
+        repliesAre(toolCalls(call("t1", "echo")), LlmReply.Text("done", usage))
+
+        agent().run("echo this")
+
+        assertEquals(setOf("r1"), events.mapNotNull { runIdOf(it) }.toSet())
+    }
+
+    @Test
+    fun `given a top level agent when it starts then should have no parent run id`() = runTest {
+        repliesAre(LlmReply.Text("done", usage))
+
+        agent().run("hello")
+
+        assertEquals(null, events.filterIsInstance<AgentEvent.AgentStarted>().single().parentRunId)
+    }
+
+    @Test
+    fun `given an agent started inside another agent's run when it emits AgentStarted then should record the parent run id`() = runTest {
+        val runIds = SequentialRunIds()
+        repliesAre(toolCalls(delegation("c1", "orders")), LlmReply.Text("parent done", usage))
+        val parent = Agent("orchestrator", llm, "sys", listOf(specialistTool("orders", runIds)), emptyList(), sink, 5, 0, runIds)
+
+        parent.run("question")
+
+        val started = events.filterIsInstance<AgentEvent.AgentStarted>()
+        assertEquals("r1", started.first { it.agent == "orchestrator" }.runId)
+        val child = started.first { it.agent == "orders" }
+        assertEquals("r2", child.runId)
+        assertEquals("r1", child.parentRunId)
+    }
+
+    @Test
+    fun `given two sub-agents running in parallel from one parent when they emit events then should give them distinct run ids and the same parent`() = runTest {
+        val runIds = SequentialRunIds()
+        repliesAre(toolCalls(delegation("c1", "orders"), delegation("c2", "orders")), LlmReply.Text("parent done", usage))
+        val parent = Agent("orchestrator", llm, "sys", listOf(specialistTool("orders", runIds)), emptyList(), sink, 5, 0, runIds)
+
+        parent.run("question")
+
+        val children = events.filterIsInstance<AgentEvent.AgentStarted>().filter { it.agent == "orders" }
+        assertEquals(setOf("r2", "r3"), children.map { it.runId }.toSet())
+        assertEquals(setOf("r1"), children.map { it.parentRunId }.toSet())
+    }
+
+    @Test
+    fun `given a follow up and a finish after a run when they emit then should keep the run id of the run`() = runTest {
+        val schema = OutputSchema("answer_format", "The final answer.", emptySchema)
+        repliesAre(LlmReply.Text("first", usage), LlmReply.Text("second", usage))
+        coEvery { llm.structured(any(), schema) } returns StructuredReply(buildJsonObject { put("answer", "ok") }, usage)
+        val agent = agent()
+
+        agent.run("question")
+        agent.followUp("fix it")
+        agent.finish(schema)
+
+        val calls = events.filterIsInstance<AgentEvent.ModelCalled>()
+        assertEquals(3, calls.size)
+        assertEquals(setOf("r1"), calls.map { it.runId }.toSet())
+    }
+
+    @Test
+    fun `given a follow up that delegates to a sub-agent when it runs then should still record the parent run id`() = runTest {
+        val runIds = SequentialRunIds()
+        repliesAre(LlmReply.Text("first", usage), toolCalls(delegation("c1", "orders")), LlmReply.Text("second", usage))
+        val parent = Agent("orchestrator", llm, "sys", listOf(specialistTool("orders", runIds)), emptyList(), sink, 5, 0, runIds)
+
+        parent.run("question")
+        parent.followUp("check the order")
+
+        val child = events.filterIsInstance<AgentEvent.AgentStarted>().first { it.agent == "orders" }
+        assertEquals("r1", child.parentRunId)
     }
 }
